@@ -1,3 +1,6 @@
+[![Build Status](https://dev.azure.com/jet-opensource/opensource/_apis/build/status/jet.kube-webhook-certgen?branchName=master)](https://dev.azure.com/jet-opensource/opensource/_build/latest?definitionId=13&branchName=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jet/kube-webhook-certgen)](https://goreportcard.com/report/github.com/jet/kube-webhook-certgen)
+
 # Kubernetes webhook certificate generator and patcher
 
 This utility has two functions
