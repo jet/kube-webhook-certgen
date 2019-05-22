@@ -18,6 +18,8 @@ steps:
     sudo rm -rf /usr/bin/go
     wget https://dl.google.com/go/go$(GOVERSION).linux-amd64.tar.gz -q
     sudo tar -C /usr/bin -xzf go$(GOVERSION).linux-amd64.tar.gz
+    ls -la /usr/bin
+    ls -la /usr/bin/go
     mkdir -p '$(GOBIN)'
     mkdir -p '$(GOPATH)/pkg'
     mkdir -p '$(modulePath)'
