@@ -1,0 +1,32 @@
+name: $(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+pr: none
+trigger:
+  branches:
+    include:
+      - master
+      - refs/tags/*
+pool:
+  vmImage: 'ubuntu-latest'
+steps:
+- script: .cicd/test.sh
+  displayName: 'Test'
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+    failTaskOnFailedTests: true
+- script: .cicd/build.sh
+  displayName: 'Build'
+- script: .cicd/docker.sh
+  displayName: 'Docker Build'
+- script: |  
+    cp Dockerfile $(Build.ArtifactStagingDirectory)
+    cp kube-webhook-certgen $(Build.ArtifactStagingDirectory)
+  displayName: 'Copy Artifacts'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'kube-webhook-certgen'
+    publishLocation: 'Container'
+
+
