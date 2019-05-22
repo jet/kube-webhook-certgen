@@ -8,15 +8,16 @@ variables:
   GO111MODULE: 'on'
   GOVERSION:   '1.12.5'
   GOBIN:       '$(GOPATH)/bin'
-  GOROOT:      '/usr/local/go'
+  GOROOT:      '/usr/bin/go'
   GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
   modulePath:  '$(GOPATH)/src/github.com/$(build.repository.name)'
 
 steps:
 
 - script: |
+    sudo rm -rf /usr/bin/go
     wget https://dl.google.com/go/go$(GOVERSION).linux-amd64.tar.gz -q
-    sudo tar -C /usr/local -xzf go$(GOVERSION).linux-amd64.tar.gz
+    sudo tar -C /usr/bin -xzf go$(GOVERSION).linux-amd64.tar.gz
     mkdir -p '$(GOBIN)'
     mkdir -p '$(GOPATH)/pkg'
     mkdir -p '$(modulePath)'
