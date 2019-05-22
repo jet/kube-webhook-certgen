@@ -5,11 +5,12 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  GOVERSION:  '1.12.5'
-  GOBIN:      '$(GOPATH)/bin'
-  GOROOT:     '/usr/local/go'
-  GOPATH:     '$(system.defaultWorkingDirectory)/gopath'
-  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)'
+  GO111MODULE: 'on'
+  GOVERSION:   '1.12.5'
+  GOBIN:       '$(GOPATH)/bin'
+  GOROOT:      '/usr/local/go'
+  GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
+  modulePath:  '$(GOPATH)/src/github.com/$(build.repository.name)'
 
 steps:
 
@@ -25,6 +26,7 @@ steps:
     echo '##vso[task.prependpath]$(GOBIN)'
     echo '##vso[task.prependpath]$(GOROOT)/bin'
     go version
+    which go
   displayName: 'Set up Go'
 
 - script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v .
