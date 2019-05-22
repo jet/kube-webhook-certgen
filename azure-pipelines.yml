@@ -1,8 +1,3 @@
-# Go
-# Build your Go project.
-# Add steps that test, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/go
-
 trigger:
 - master
 
@@ -10,10 +5,10 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  GOBIN:  '$(GOPATH)/bin' # Go binaries path
-  GOROOT: '/usr/local/go1.11' # Go installation path
-  GOPATH: '$(system.defaultWorkingDirectory)/gopath' # Go workspace path
-  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)' # Path to the module's code
+  GOBIN:  '$(GOPATH)/bin'
+  GOROOT: '/usr/local/go1.12'
+  GOPATH: '$(system.defaultWorkingDirectory)/gopath'
+  modulePath: '$(GOPATH)/src/github.com/$(build.repository.name)'
 
 steps:
 - script: |
@@ -27,13 +22,14 @@ steps:
     echo '##vso[task.prependpath]$(GOROOT)/bin'
   displayName: 'Set up the Go workspace'
 
-- script: |
-    go version
-    go get -v -t -d ./...
-    if [ -f Gopkg.toml ]; then
-        curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-        dep ensure
-    fi
-    go build -v .
+- script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v .
   workingDirectory: '$(modulePath)'
-  displayName: 'Get dependencies, then build'
+  displayName: 'Build'
+
+- script: go test -v ./...
+  displayName: 'Test'
+
+- script: |
+    docker build . -t jet/kube-webhook-certgen
+    docker run jet/kube-webhook-certgen version
+  displayName: 'Build docker'
