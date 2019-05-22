@@ -13,7 +13,8 @@ variables:
 steps:
 
 - script: |
-    wget https://dl.google.com/go/go1.12.5.linux-amd64.tar.gz
+    wget https://dl.google.com/go/go1.12.5.linux-amd64.tar.gz -q
+    stat go1.12.5.linux-amd64.tar.gz
     tar -C /usr/local -xzfv go1.12.5.linux-amd64.tar.gz
     mkdir -p '$(GOBIN)'
     mkdir -p '$(GOPATH)/pkg'
