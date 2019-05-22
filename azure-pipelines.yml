@@ -19,17 +19,22 @@ steps:
     goBin:   '$(GOPATH)/bin'
 
 - script: |
+    mkdir -p '$(GOBIN)'
+    mkdir -p '$(GOPATH)/pkg'
     mkdir -p '$(modulePath)'
     shopt -s extglob
     shopt -s dotglob
     mv !(gopath) '$(modulePath)'
+    echo '##vso[task.prependpath]$(GOBIN)'
+    echo '##vso[task.prependpath]$(GOROOT)/bin'
+    go version
   displayName: 'Set up Go Environment'
 
 - script: go fmt ./... && git diff --exit-code
   workingDirectory: '$(modulePath)'
   displayName: 'Check formatting'
 
-- script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -mod=vendor .
+- script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -mod=readonly .
   workingDirectory: '$(modulePath)'
   displayName: 'Build'
 
