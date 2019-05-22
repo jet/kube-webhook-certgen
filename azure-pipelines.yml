@@ -24,23 +24,31 @@ steps:
     mv !(gopath) '$(modulePath)'
     echo '##vso[task.prependpath]$(GOBIN)'
     echo '##vso[task.prependpath]$(GOROOT)/bin'
+    go version
   displayName: 'Set up Go'
 
 - script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v .
   workingDirectory: '$(modulePath)'
   displayName: 'Build'
 
-- script: go test -v ./...
+- script: |
+    go get -u github.com/jstemmer/go-junit-report
+    go test -v ./... 2>&1 | go-junit-report > TEST-ALL.xml
   workingDirectory: '$(modulePath)'
   displayName: 'Test'
 
-- script: docker build . -t jet/kube-webhook-certgen
-  workingDirectory: '$(modulePath)'
-  displayName: 'Build docker'
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+    searchFolder: '$(modulePath)'
+    failTaskOnFailedTests: true
 
-- script: docker run jet/kube-webhook-certgen version
+- script: |
+    docker build . -t jet/kube-webhook-certgen
+    docker run jet/kube-webhook-certgen version
   workingDirectory: '$(modulePath)'
-  displayName: 'Test docker executes'
+  displayName: 'Test build docker'
 
 - task: PublishPipelineArtifact@0
   inputs:
