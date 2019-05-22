@@ -1,0 +1,22 @@
+name: $(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+  branches:
+    include:
+      - refs/pull/*
+pool:
+  vmImage: 'ubuntu-latest'
+steps:
+- script: .cicd/checks.sh
+  displayName: 'Checks'
+- script: .cicd/test.sh
+  displayName: 'Test'
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+    failTaskOnFailedTests: true
+- script: .cicd/build.sh
+  displayName: 'Build'
+- script: .cicd/docker.sh
+  displayName: 'Docker Build'
+  condition: lt(variables['System.PullRequest.PullRequestId'], 1)

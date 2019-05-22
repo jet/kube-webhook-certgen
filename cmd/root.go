@@ -43,6 +43,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&logfmt, "log-format", "text", "Log format: text|json")
 }
 
+// Execute is the main entry point for the program
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
