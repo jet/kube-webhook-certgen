@@ -5,10 +5,10 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  GO111MODULE: 'on'
-  GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
-  GOBIN:       '$(GOPATH)/bin'
-  GOROOT:      '/usr/bin/go'
+  # GO111MODULE: 'on'
+  # GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
+  # GOBIN:       '$(GOPATH)/bin'
+  # GOROOT:      '/usr/bin/go'
   modulePath:  '$(GOPATH)/src/github.com/$(build.repository.name)'
 
 steps:
