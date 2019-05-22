@@ -12,6 +12,8 @@ variables:
 
 steps:
 - script: |
+    ls /usr/local
+- script: |
     mkdir -p '$(GOBIN)'
     mkdir -p '$(GOPATH)/pkg'
     mkdir -p '$(modulePath)'
