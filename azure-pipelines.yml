@@ -59,14 +59,14 @@ steps:
   workingDirectory: '$(modulePath)'
   displayName: 'Test build docker'
 
-- task: PublishPipelineArtifact@0
-  displayName: Publish binary
-  inputs:
-    artifactName: 'kube-webhook-certgen'
-    targetPath: '$(modulePath)/kube-webhook-certgen'
+- script: |
+    mkdir publish
+    mv Dockerfile publish
+    mv kube-webhook-certgen publish
+  workingDirectory: '$(modulePath)'
+  displayName: 'Move files to pub dir'
 
 - task: PublishPipelineArtifact@0
-  displayName: Publish dockerfile
   inputs:
-    artifactName: 'Dockerfile'
-    targetPath: '$(modulePath)/Dockerfile'
+    artifactName: 'publish'
+    targetPath: '$(modulePath)/publish'
