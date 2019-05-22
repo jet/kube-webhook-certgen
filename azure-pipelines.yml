@@ -31,17 +31,18 @@ steps:
   displayName: 'Build'
 
 - script: go test -v ./...
+  workingDirectory: '$(modulePath)'
   displayName: 'Test'
 
-- script: |
-    ls -la
-    docker build . -t jet/kube-webhook-certgen
+- script: docker build . -t jet/kube-webhook-certgen
+  workingDirectory: '$(modulePath)'
   displayName: 'Build docker'
 
 - script: docker run jet/kube-webhook-certgen version
+  workingDirectory: '$(modulePath)'
   displayName: 'Test docker executes'
 
 - task: PublishPipelineArtifact@0
   inputs:
     artifactName: 'kube-webhook-certgen'
-    targetPath: 'kube-webhook-certgen'
+    targetPath: '$(modulePath)/kube-webhook-certgen'
