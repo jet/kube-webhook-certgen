@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  # GO111MODULE: 'on'
+  GO111MODULE: 'on'
   # GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
   # GOBIN:       '$(GOPATH)/bin'
   # GOROOT:      '/usr/bin/go'
