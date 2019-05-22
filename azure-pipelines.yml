@@ -6,14 +6,12 @@ pool:
 
 variables:
   GO111MODULE: 'on'
-  GOVERSION:   '1.12.5'
   GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
   GOBIN:       '$(GOPATH)/bin'
   GOROOT:      '/usr/bin/go'
   modulePath:  '$(GOPATH)/src/github.com/$(build.repository.name)'
 
 steps:
-
 - task: GoTool@0
   inputs:
     version: '1.12.5'
@@ -33,7 +31,7 @@ steps:
     which go
   displayName: 'Set up Go Environment'
 
-- script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v .
+- script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -mod=readonly .
   workingDirectory: '$(modulePath)'
   displayName: 'Build'
 
