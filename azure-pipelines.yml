@@ -7,19 +7,20 @@ pool:
 variables:
   GO111MODULE: 'on'
   GOVERSION:   '1.12.5'
+  GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
   GOBIN:       '$(GOPATH)/bin'
   GOROOT:      '/usr/bin/go'
-  GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
   modulePath:  '$(GOPATH)/src/github.com/$(build.repository.name)'
 
 steps:
 
+- task: GoTool@0
+  inputs:
+    version: '1.12.5'
+    goPath:  '$(system.defaultWorkingDirectory)/gopath'
+    goBin:   '$(GOPATH)/bin'
+
 - script: |
-    sudo rm -rf /usr/bin/go
-    wget https://dl.google.com/go/go$(GOVERSION).linux-amd64.tar.gz -q
-    sudo tar -C /usr/bin -xzf go$(GOVERSION).linux-amd64.tar.gz
-    ls -la /usr/bin
-    ls -la /usr/bin/go
     mkdir -p '$(GOBIN)'
     mkdir -p '$(GOPATH)/pkg'
     mkdir -p '$(modulePath)'
@@ -30,7 +31,7 @@ steps:
     echo '##vso[task.prependpath]$(GOROOT)/bin'
     go version
     which go
-  displayName: 'Set up Go'
+  displayName: 'Set up Go Environment'
 
 - script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v .
   workingDirectory: '$(modulePath)'
