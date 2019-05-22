@@ -58,6 +58,13 @@ steps:
   displayName: 'Test build docker'
 
 - task: PublishPipelineArtifact@0
+  displayName: Publish binary
   inputs:
     artifactName: 'kube-webhook-certgen'
     targetPath: '$(modulePath)/kube-webhook-certgen'
+
+- task: PublishPipelineArtifact@0
+  displayName: Publish dockerfile
+  inputs:
+    artifactName: 'Dockerfile'
+    targetPath: '$(modulePath)/Dockerfile'
