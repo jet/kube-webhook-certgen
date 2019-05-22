@@ -1,0 +1,70 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  GO111MODULE: 'on'
+  # GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
+  # GOBIN:       '$(GOPATH)/bin'
+  # GOROOT:      '/usr/bin/go'
+  modulePath:  '$(GOPATH)/src/github.com/$(build.repository.name)'
+
+steps:
+- task: GoTool@0
+  inputs:
+    version: '1.12.5'
+    goPath:  '$(system.defaultWorkingDirectory)/gopath'
+    goBin:   '$(GOPATH)/bin'
+
+- script: |
+    mkdir -p '$(GOBIN)'
+    mkdir -p '$(GOPATH)/pkg'
+    mkdir -p '$(modulePath)'
+    shopt -s extglob
+    shopt -s dotglob
+    mv !(gopath) '$(modulePath)'
+    echo '##vso[task.prependpath]$(GOBIN)'
+    echo '##vso[task.prependpath]$(GOROOT)/bin'
+    go version
+  displayName: 'Set up Go Environment'
+
+- script: go fmt ./... && git diff --exit-code
+  workingDirectory: '$(modulePath)'
+  displayName: 'Check formatting'
+
+- script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -mod=readonly .
+  workingDirectory: '$(modulePath)'
+  displayName: 'Build'
+
+- script: |
+    go get -u github.com/jstemmer/go-junit-report
+    go test -v ./... 2>&1 | go-junit-report > TEST-ALL.xml
+  workingDirectory: '$(modulePath)'
+  displayName: 'Test'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/TEST-*.xml'
+    searchFolder: '$(modulePath)'
+    failTaskOnFailedTests: true
+
+- script: |
+    docker build . -t jet/kube-webhook-certgen
+    docker run jet/kube-webhook-certgen version
+  workingDirectory: '$(modulePath)'
+  displayName: 'Test build docker'
+
+- task: PublishPipelineArtifact@0
+  displayName: Publish binary
+  inputs:
+    artifactName: 'kube-webhook-certgen'
+    targetPath: '$(modulePath)/kube-webhook-certgen'
+
+- task: PublishPipelineArtifact@0
+  displayName: Publish dockerfile
+  inputs:
+    artifactName: 'Dockerfile'
+    targetPath: '$(modulePath)/Dockerfile'
