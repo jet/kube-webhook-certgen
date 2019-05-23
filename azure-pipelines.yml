@@ -1,16 +1,18 @@
 name: $(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 
 trigger:
-- master
+  tags:
+    include:
+      - v*
+  branches:
+    include:
+      - master
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
   GO111MODULE: 'on'
-  # GOPATH:      '$(system.defaultWorkingDirectory)/gopath'
-  # GOBIN:       '$(GOPATH)/bin'
-  # GOROOT:      '/usr/bin/go'
   modulePath:  '$(GOPATH)/src/github.com/$(build.repository.name)'
 
 steps:
@@ -36,7 +38,12 @@ steps:
   workingDirectory: '$(modulePath)'
   displayName: 'Check formatting'
 
-- script: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -mod=readonly .
+- script: |
+    git status
+    export VERSION=$(git tag --points-at HEAD)
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -v -mod=readonly . \
+    -ldflags "-X $(modulePath)/core.Version=$(VERSION) -X $(modulePath)/core.BuildTime=$(date -u +%FT%TZ)"
   workingDirectory: '$(modulePath)'
   displayName: 'Build'
 
