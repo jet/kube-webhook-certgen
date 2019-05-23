@@ -39,10 +39,10 @@ func TestCertificateCreation(t *testing.T) {
 
 	client := &http.Client{Transport: tr}
 	res, err := client.Get(ts.URL)
-	defer res.Body.Close()
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		t.Errorf("Response code was %v; want 200", res.StatusCode)
