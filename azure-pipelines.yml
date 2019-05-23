@@ -1,5 +1,4 @@
 name: $(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
-
 trigger:
   tags:
     include:
@@ -7,72 +6,22 @@ trigger:
   branches:
     include:
       - master
-
 pool:
   vmImage: 'ubuntu-latest'
-
-variables:
-  GO111MODULE: 'on'
-  modulePath:  '$(GOPATH)/src/github.com/$(build.repository.name)'
-
 steps:
-- task: GoTool@0
-  inputs:
-    version: '1.12.5'
-    goPath:  '$(system.defaultWorkingDirectory)/gopath'
-    goBin:   '$(GOPATH)/bin'
-
-- script: |
-    mkdir -p '$(GOBIN)'
-    mkdir -p '$(GOPATH)/pkg'
-    mkdir -p '$(modulePath)'
-    shopt -s extglob
-    shopt -s dotglob
-    mv !(gopath) '$(modulePath)'
-    echo '##vso[task.prependpath]$(GOBIN)'
-    echo '##vso[task.prependpath]$(GOROOT)/bin'
-    go version
-  displayName: 'Set up Go Environment'
-
-- script: go fmt ./... && git diff --exit-code
-  workingDirectory: '$(modulePath)'
-  displayName: 'Check formatting'
-
-- script: |
-    git status
-    export VERSION=$(git tag --points-at HEAD)
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -ldflags "-X $(modulePath)/core.Version=$(VERSION) -X $(modulePath)/core.BuildTime=$(date -u +%FT%TZ)"
-  workingDirectory: '$(modulePath)'
-  displayName: 'Build'
-
-- script: |
-    go get -u github.com/jstemmer/go-junit-report
-    go test -v ./... 2>&1 | go-junit-report > TEST-ALL.xml
-  workingDirectory: '$(modulePath)'
-  displayName: 'Test'
-
+- script: . .cicd/env.sh
+- script: .cicd/test.sh
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/TEST-*.xml'
-    searchFolder: '$(modulePath)'
     failTaskOnFailedTests: true
-
-- script: |
-    docker build . -t jet/kube-webhook-certgen
-    docker run jet/kube-webhook-certgen version
-  workingDirectory: '$(modulePath)'
-  displayName: 'Test build docker'
-
-- script: |
-    mkdir publish
-    mv Dockerfile publish
-    mv kube-webhook-certgen publish
-  workingDirectory: '$(modulePath)'
-  displayName: 'Move files to pub dir'
-
-- task: PublishPipelineArtifact@0
+- script: .cicd/build.sh
+- script: .cicd/docker.sh
+- task: Docker@2
   inputs:
-    artifactName: 'publish'
-    targetPath: '$(modulePath)/publish'
+    command: 'push'
+    containerRegistry: 'jettech-dockerhub'
+    repository: '$(dockerRepo)'
+    tags: '$(dockerTag)'
+    condition: eq(variables['RELEASEDOCKER'], 'true')
