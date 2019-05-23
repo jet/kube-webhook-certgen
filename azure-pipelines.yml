@@ -42,8 +42,7 @@ steps:
     git status
     export VERSION=$(git tag --points-at HEAD)
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -v -mod=readonly . \
-    -ldflags "-X $(modulePath)/core.Version=$(VERSION) -X $(modulePath)/core.BuildTime=$(date -u +%FT%TZ)"
+    go build -ldflags "-X $(modulePath)/core.Version=$(VERSION) -X $(modulePath)/core.BuildTime=$(date -u +%FT%TZ)"
   workingDirectory: '$(modulePath)'
   displayName: 'Build'
 
