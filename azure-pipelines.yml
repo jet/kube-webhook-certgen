@@ -10,18 +10,23 @@ pool:
   vmImage: 'ubuntu-latest'
 steps:
 - script: . .cicd/env.sh
+  displayName: 'Set environment'
 - script: .cicd/test.sh
+  displayName: 'Test'
 - task: PublishTestResults@2
   inputs:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/TEST-*.xml'
     failTaskOnFailedTests: true
 - script: .cicd/build.sh
+  displayName: 'Build'
 - script: .cicd/docker.sh
+  displayName: 'Docker'
 - task: Docker@2
   inputs:
     command: 'push'
     containerRegistry: 'jettech-dockerhub'
     repository: '$(dockerRepo)'
     tags: '$(dockerTag)'
+    displayName: 'Push'
     condition: eq(variables['RELEASEDOCKER'], 'true')
