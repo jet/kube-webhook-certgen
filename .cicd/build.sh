@@ -21,6 +21,3 @@ docker run --rm \
   -e GOARCH=amd64    \
   golang:1.12-stretch \
     go build -ldflags "-X $mod/core.Version=$vers -X $mod/core.BuildTime=$buildTime"
-
-docker build . -t jettech/kube-webhook-certgen:$dockerTag
-docker run --rm jettech/kube-webhook-certgen:$dockerTag version
