@@ -16,7 +16,9 @@ steps:
     echo "##vso[task.setvariable variable=rev]$rev"
     echo "##vso[task.setvariable variable=vers]$vers"
     echo "##vso[task.setvariable variable=dockerTag]$dockerTag"
+    echo "##vso[task.setvariable variable=wat]seriously??"
   displayName: 'Set environment'
+- script: echo $(wat)
 - script: .cicd/test.sh
   displayName: 'Test'
 - task: PublishTestResults@2
