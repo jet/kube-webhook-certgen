@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -eox pipefail
 
 export dockerRepo="jet/kube-webhook-certgen"
 export mod="$(head -n 1 go.mod | cut -f 2 -d ' ')"
-
-# Get version if there is a current git tag, otherwise use the commit
 export rev=$(git rev-parse HEAD)
 export tag=$(git tag --points-at HEAD)
-
-# Get date
 export buildTime=$(date -u +%FT%TZ)
 
+# This will break if there are multiple tags set to the same commit, which is what we want
 if [ $tag ]; then
   export vers=$tag
   export dockerTag=$vers
@@ -19,6 +16,7 @@ else
   export dockerTag=latest
 fi
 
+# Azure pipelines requires this invocation to set variables to be available in later steps
 echo "##vso[task.setvariable variable=dockerRepo]$dockerRepo"
 echo "##vso[task.setvariable variable=mod]$mod"
 echo "##vso[task.setvariable variable=rev]$rev"

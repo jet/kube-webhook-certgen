@@ -18,4 +18,4 @@ docker run --rm \
   -e GOARCH=amd64    \
   golang:1.12-stretch \
     /bin/bash -c \
-    "go get -u github.com/jstemmer/go-junit-report; go test -v ./... 2>&1 | go-junit-report > TEST-ALL.xml"
+    "go get -u github.com/jstemmer/go-junit-report; go test -mod=vendor -v ./... 2>&1 | go-junit-report > TEST-ALL.xml"

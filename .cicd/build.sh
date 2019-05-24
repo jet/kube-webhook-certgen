@@ -20,4 +20,4 @@ docker run --rm \
   -e GOOS=linux      \
   -e GOARCH=amd64    \
   golang:1.12-stretch \
-    go build -ldflags "-X $mod/core.Version=$vers -X $mod/core.BuildTime=$buildTime"
+    go build -ldflags -mod=vendor "-X $mod/core.Version=$vers -X $mod/core.BuildTime=$buildTime"
