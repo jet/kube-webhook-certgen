@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -eox pipefail
 
 if [ $tag ]; then
   vers=$tag
@@ -9,6 +9,6 @@ else
   dockerTag=latest
 fi
 
-docker build . -t jettech/kube-webhook-certgen:$dockerTag
+docker build . -t $dockerRepo:$dockerTag
 docker run --rm $dockerRepo:$dockerTag version
 echo "Created image with $dockerRepo:$dockerTag"

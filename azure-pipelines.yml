@@ -9,6 +9,8 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 steps:
+- script: echo pr id is not null and is $(System.PullRequest.PullRequestId)
+  condition: ne(variables['System.PullRequest.PullRequestId'], null)
 - script: . .cicd/env.sh
   displayName: 'Set environment'
 - script: .cicd/test.sh
@@ -21,12 +23,13 @@ steps:
 - script: .cicd/build.sh
   displayName: 'Build'
 - script: .cicd/docker.sh
-  displayName: 'Docker'
+  displayName: 'Docker Build'
 - task: Docker@2
+  displayName: 'Docker Push'
   inputs:
     command: 'push'
     containerRegistry: 'jettech-dockerhub'
     repository: '$(dockerRepo)'
     tags: '$(dockerTag)'
     displayName: 'Push'
-    condition: eq(variables['RELEASEDOCKER'], 'true')
+    condition: eq(variables['System.PullRequest.PullRequestId'], null)
