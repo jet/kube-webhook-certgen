@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -eox pipefail
 
 export dockerRepo="jet/kube-webhook-certgen"
 # Get module path from go.mod

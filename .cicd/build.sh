@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -eox pipefail
 
 docker run --rm \
   -v "$(pwd):/go/src/$mod" \
