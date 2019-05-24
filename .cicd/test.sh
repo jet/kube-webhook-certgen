@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eox pipefail
 
+. .cicd/env.sh
+
 docker run --rm \
   -v "$(pwd):/go/src/$mod" \
   -w "/go/src/$mod"  \

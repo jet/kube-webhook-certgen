@@ -17,6 +17,8 @@ else
 fi
 
 # Azure pipelines requires this invocation to set variables to be available in later steps
+# And then you have to retrieve them in a similar interpolation fashion - i.e. they are _not_
+# environment variables
 echo "##vso[task.setvariable variable=dockerRepo]$dockerRepo"
 echo "##vso[task.setvariable variable=mod]$mod"
 echo "##vso[task.setvariable variable=rev]$rev"

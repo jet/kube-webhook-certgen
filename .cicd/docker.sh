@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-set -eox pipefail
+set -eo pipefail
+
+. .cicd/env.sh
 
 docker build . -t $dockerRepo:$dockerTag
 docker run --rm $dockerRepo:$dockerTag version
-echo "Created image with $dockerRepo:$dockerTag"

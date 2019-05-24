@@ -9,13 +9,6 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 steps:
-- script: |
-    . .cicd/env.sh
-    echo "##vso[task.setvariable variable=wat]seriously??"
-  displayName: 'Set environment'
-- script: |
-    echo dockerTag=$(dockerTag)
-    echo wat=$(wat)
 - script: .cicd/test.sh
   displayName: 'Test'
 - task: PublishTestResults@2
@@ -23,11 +16,7 @@ steps:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/TEST-*.xml'
     failTaskOnFailedTests: true
-- script: |
-    echo "mod=$mod"
-    echo "vers=$vers"
-    echo "buildTime=$buildTime"
-    .cicd/build.sh
+- script: .cicd/build.sh
   displayName: 'Build'
 - script: .cicd/docker.sh
   displayName: 'Docker Build'
@@ -36,7 +25,7 @@ steps:
   inputs:
     command: 'push'
     containerRegistry: 'jettech-dockerhub'
-    repository: '$(dockerRepo)'
+    repository: '$(dockerRepo)' # Set by at least one invocation of .cicd/env.sh
     tags: '$(dockerTag)'
     displayName: 'Push'
     condition: eq(variables['System.PullRequest.PullRequestId'], False)

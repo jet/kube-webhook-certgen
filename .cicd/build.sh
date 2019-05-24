@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -eox pipefail
 
-echo "mod=$mod"
-echo "vers=$vers"
-echo "buildTime=$buildTime"
+. .cicd/env.sh
 
 docker run --rm \
   -v "$(pwd):/go/src/$mod" \
