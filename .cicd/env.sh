@@ -15,10 +15,3 @@ else
   export vers=$rev
   export dockerTag=latest
 fi
-
-# Azure pipelines requires this invocation to set variables to be available in later steps
-echo "##vso[task.setvariable variable=dockerRepo]$dockerRepo"
-echo "##vso[task.setvariable variable=mod]$mod"
-echo "##vso[task.setvariable variable=rev]$rev"
-echo "##vso[task.setvariable variable=vers]$vers"
-echo "##vso[task.setvariable variable=dockerTag]$dockerTag"
