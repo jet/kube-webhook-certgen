@@ -11,11 +11,6 @@ pool:
 steps:
 - script: |
     . .cicd/env.sh
-    echo "##vso[task.setvariable variable=dockerRepo]$dockerRepo"
-    echo "##vso[task.setvariable variable=mod]$mod"
-    echo "##vso[task.setvariable variable=rev]$rev"
-    echo "##vso[task.setvariable variable=vers]$vers"
-    echo "##vso[task.setvariable variable=dockerTag]$dockerTag"
     echo "##vso[task.setvariable variable=wat]seriously??"
   displayName: 'Set environment'
 - script: |
@@ -28,7 +23,11 @@ steps:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/TEST-*.xml'
     failTaskOnFailedTests: true
-- script: .cicd/build.sh
+- script: |
+    echo "mod=$mod"
+    echo "vers=$vers"
+    echo "buildTime=$buildTime"
+    .cicd/build.sh
   displayName: 'Build'
 - script: .cicd/docker.sh
   displayName: 'Docker Build'
