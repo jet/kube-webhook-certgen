@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-set -eox pipefail
+set -eo pipefail
 
 export dockerRepo="jet/kube-webhook-certgen"
-# Get module path from go.mod
 export mod="$(head -n 1 go.mod | cut -f 2 -d ' ')"
 
 # Get version if there is a current git tag, otherwise use the commit
@@ -19,3 +18,9 @@ else
   export vers=$rev
   export dockerTag=latest
 fi
+
+echo "##vso[task.setvariable variable=dockerRepo]$dockerRepo"
+echo "##vso[task.setvariable variable=mod]$mod"
+echo "##vso[task.setvariable variable=rev]$rev"
+echo "##vso[task.setvariable variable=vers]$vers"
+echo "##vso[task.setvariable variable=dockerTag]$dockerTag"
