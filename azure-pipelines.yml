@@ -22,16 +22,16 @@ steps:
   displayName: 'Docker Build'
 - script: echo false
   displayName: 'IsFalse'
-  condition: eq(variables['System.PullRequest.PullRequestId'], False)
+  condition: lt(variables['System.PullRequest.PullRequestId'], 1)
 - script: echo true
   displayName: 'IsTrue'
-  condition: eq(variables['System.PullRequest.PullRequestId'], True)
+  condition: gt(variables['System.PullRequest.PullRequestId'], 0)
 - task: Docker@2
   displayName: 'Docker Push'
+  condition: lt(variables['System.PullRequest.PullRequestId'], 1)
   inputs:
     command: 'push'
     containerRegistry: 'jettech-dockerhub'
     repository: '$(dockerRepo)' # Set by at least one invocation of .cicd/env.sh
     tags: '$(dockerTag)'
     displayName: 'Push'
-    condition: eq(variables['System.PullRequest.PullRequestId'], False)
