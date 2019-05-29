@@ -20,6 +20,12 @@ steps:
   displayName: 'Build'
 - script: .cicd/docker.sh
   displayName: 'Docker Build'
+- script: echo false
+  displayName: 'IsFalse'
+  condition: eq(variables['System.PullRequest.PullRequestId'], False)
+- script: echo true
+  displayName: 'IsTrue'
+  condition: eq(variables['System.PullRequest.PullRequestId'], True)
 - task: Docker@2
   displayName: 'Docker Push'
   inputs:
