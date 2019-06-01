@@ -1,15 +1,12 @@
 package k8s
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	"k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"sync"
@@ -63,39 +60,35 @@ func initClient() (*k8s, error) {
 	return &k8s{clientset: c}, err
 }
 
-func createPatch(numWebhooks int, caBundle string) []byte {
-	patches := make([]webhookCaPatch, numWebhooks)
-	for i := 0; i < numWebhooks; i++ {
-		patches[i] = webhookCaPatch{
-			Op:    "add",
-			Path:  fmt.Sprintf("/webhooks/%d/clientConfig/caBundle", i),
-			Value: caBundle}
-	}
-
-	dat, _ := json.Marshal(patches)
-	return dat
-}
-
 // PatchWebhookConfigurations will patch validatingWebhook and mutatingWebhook clientConfig configurations with
-// the provided ca data.
-func PatchWebhookConfigurations(configurationNames string, ca []byte, patchMutating bool, patchValidating bool) {
+// the provided ca data. If failurePolicy is provided, patch all webhooks with this value
+func PatchWebhookConfigurations(
+	configurationNames string, ca []byte,
+	failurePolicy *admissionv1beta1.FailurePolicyType,
+	patchMutating bool, patchValidating bool) {
+
 	log.Debugf("Patching webhook configurations '%s' mutating=%t, validating=%t", configurationNames, patchMutating, patchValidating)
-	caBase64 := base64.StdEncoding.EncodeToString(ca)
 	k8s := getk8s()
+
 	if patchValidating {
 		valHook, err := k8s.clientset.
 			AdmissionregistrationV1beta1().
 			ValidatingWebhookConfigurations().
 			Get(configurationNames, metav1.GetOptions{})
+
 		if err != nil {
 			log.WithField("err", err).Fatal("Failed getting validating webhook")
 		}
-		patch := createPatch(len(valHook.Webhooks), caBase64)
-		_, err = k8s.clientset.
-			AdmissionregistrationV1beta1().
-			ValidatingWebhookConfigurations().
-			Patch(configurationNames, types.JSONPatchType, patch)
-		if err != nil {
+
+		for i := range valHook.Webhooks {
+			h := &valHook.Webhooks[i]
+			h.ClientConfig.CABundle = ca
+			if failurePolicy != nil {
+				h.FailurePolicy = failurePolicy
+			}
+		}
+
+		if _, err = k8s.clientset.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Update(valHook); err != nil {
 			log.WithField("err", err).Fatal("Failed patching validating webhook")
 		}
 		log.Debug("Patched validating hook")
@@ -104,19 +97,23 @@ func PatchWebhookConfigurations(configurationNames string, ca []byte, patchMutat
 	}
 
 	if patchMutating {
-		mut, err := k8s.clientset.
+		mutHook, err := k8s.clientset.
 			AdmissionregistrationV1beta1().
 			MutatingWebhookConfigurations().
 			Get(configurationNames, metav1.GetOptions{})
 		if err != nil {
 			log.WithField("err", err).Fatal("Failed getting validating webhook")
 		}
-		patch := createPatch(len(mut.Webhooks), caBase64)
-		_, err = k8s.clientset.
-			AdmissionregistrationV1beta1().
-			MutatingWebhookConfigurations().
-			Patch(configurationNames, types.JSONPatchType, patch)
-		if err != nil {
+
+		for i := range mutHook.Webhooks {
+			h := &mutHook.Webhooks[i]
+			h.ClientConfig.CABundle = ca
+			if failurePolicy != nil {
+				h.FailurePolicy = failurePolicy
+			}
+		}
+
+		if _, err = k8s.clientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Update(mutHook); err != nil {
 			log.WithField("err", err).Fatal("Failed patching validating webhook")
 		}
 		log.Debug("Patched mutating hook")

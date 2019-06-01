@@ -3,6 +3,7 @@ package k8s
 import (
 	"bytes"
 	"k8s.io/api/admissionregistration/v1beta1"
+	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -14,6 +15,11 @@ const (
 	testWebhookName = "c7c95710-d8c3-4cc3-a2a8-8d2b46909c76"
 	testSecretName  = "15906410-af2a-4f9b-8a2d-c08ffdd5e129"
 	testNamespace   = "7cad5f92-c0d5-4bc9-87a3-6f44d5a5619d"
+)
+
+var (
+	fail   = admissionv1beta1.Fail
+	ignore = admissionv1beta1.Ignore
 )
 
 func genSecretData() (ca []byte, cert []byte, key []byte) {
@@ -109,7 +115,7 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 			},
 			Webhooks: []v1beta1.Webhook{{Name: "v1"}, {Name: "v2"}}})
 
-	PatchWebhookConfigurations(testWebhookName, ca, true, true)
+	PatchWebhookConfigurations(testWebhookName, ca, &fail, true, true)
 
 	whmut, err := client.clientset.
 		AdmissionregistrationV1beta1().
@@ -130,16 +136,28 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 	}
 
 	if !bytes.Equal(whmut.Webhooks[0].ClientConfig.CABundle, ca) {
-		t.Error("Ca retrieved from webhook configuration does not match")
+		t.Error("Ca retrieved from first mutating webhook configuration does not match")
 	}
 	if !bytes.Equal(whmut.Webhooks[1].ClientConfig.CABundle, ca) {
-		t.Error("Ca retrieved from webhook configuration does not match")
+		t.Error("Ca retrieved from second mutating webhook configuration does not match")
 	}
 	if !bytes.Equal(whval.Webhooks[0].ClientConfig.CABundle, ca) {
-		t.Error("Ca retrieved from webhook configuration does not match")
+		t.Error("Ca retrieved from first validating webhook configuration does not match")
 	}
 	if !bytes.Equal(whval.Webhooks[1].ClientConfig.CABundle, ca) {
-		t.Error("Ca retrieved from webhook configuration does not match")
+		t.Error("Ca retrieved from second validating webhook configuration does not match")
+	}
+	if whmut.Webhooks[0].FailurePolicy == nil {
+		t.Errorf("Expected first mutating webhook failure policy to be set to %s", fail)
+	}
+	if whmut.Webhooks[1].FailurePolicy == nil {
+		t.Errorf("Expected second mutating webhook failure policy to be set to %s", fail)
+	}
+	if whval.Webhooks[0].FailurePolicy == nil {
+		t.Errorf("Expected first validating webhook failure policy to be set to %s", fail)
+	}
+	if whval.Webhooks[1].FailurePolicy == nil {
+		t.Errorf("Expected second validating webhook failure policy to be set to %s", fail)
 	}
 
 }
