@@ -24,11 +24,6 @@ var (
 )
 
 func prePatchCommand(cmd *cobra.Command, args []string) {
-	if secretName == "" || namespace == "" || webhookName == "" {
-		cmd.Help()
-		os.Exit(1)
-	}
-
 	if patchMutating == false && patchValidating == false {
 		log.Fatal("patch-validating=false, patch-mutating=false. You must patch at least one kind of webhook, otherwise this command is a no-op")
 		os.Exit(1)
@@ -60,16 +55,15 @@ func patchCommand(cmd *cobra.Command, args []string) {
 	k8s.PatchWebhookConfigurations(webhookName, ca, &failurePolicy, patchMutating, patchValidating)
 }
 
-func patchFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&secretName, "secret-name", "", "Name of the secret where certificate information will be read from")
-	cmd.Flags().StringVar(&namespace, "namespace", "", "Namespace of the secret where certificate information will be read from")
-	cmd.Flags().StringVar(&webhookName, "webhook-name", "", "Name of validatingwebhookconfiguration and mutatingwebhookconfiguration that will be updated")
-	cmd.Flags().BoolVar(&patchValidating, "patch-validating", true, "If true, patch validatingwebhookconfiguration")
-	cmd.Flags().BoolVar(&patchMutating, "patch-mutating", true, "If true, patch mutatingwebhookconfiguration")
-	cmd.Flags().StringVar(&patchFailurePolicy, "patch-failure-policy", "", "If set, patch the webhooks with this failure policy. Valid options are `Ignore` or `Fail`")
-}
-
 func init() {
 	rootCmd.AddCommand(patch)
-	patchFlags(patch)
+	patch.Flags().StringVar(&secretName, "secret-name", "", "Name of the secret where certificate information will be read from")
+	patch.Flags().StringVar(&namespace, "namespace", "", "Namespace of the secret where certificate information will be read from")
+	patch.Flags().StringVar(&webhookName, "webhook-name", "", "Name of validatingwebhookconfiguration and mutatingwebhookconfiguration that will be updated")
+	patch.Flags().BoolVar(&patchValidating, "patch-validating", true, "If true, patch validatingwebhookconfiguration")
+	patch.Flags().BoolVar(&patchMutating, "patch-mutating", true, "If true, patch mutatingwebhookconfiguration")
+	patch.Flags().StringVar(&patchFailurePolicy, "patch-failure-policy", "", "If set, patch the webhooks with this failure policy. Valid options are `Ignore` or `Fail`")
+	patch.MarkFlagRequired("secret-name")
+	patch.MarkFlagRequired("namespace")
+	patch.MarkFlagRequired("webhook-name")
 }
