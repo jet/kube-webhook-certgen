@@ -56,7 +56,7 @@ func (in *VolumeAttachment) DeepCopyObject() runtime.Object {
 func (in *VolumeAttachmentList) DeepCopyInto(out *VolumeAttachmentList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]VolumeAttachment, len(*in))

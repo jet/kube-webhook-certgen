@@ -20,12 +20,14 @@ import (
 	"fmt"
 	"reflect"
 
+	"k8s.io/klog"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1beta1 "k8s.io/apimachinery/pkg/apis/meta/v1beta1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/klog"
 )
 
 // errNotList is returned when an object implements the Object style interfaces but not the List style
@@ -113,12 +115,12 @@ func Accessor(obj interface{}) (metav1.Object, error) {
 
 // AsPartialObjectMetadata takes the metav1 interface and returns a partial object.
 // TODO: consider making this solely a conversion action.
-func AsPartialObjectMetadata(m metav1.Object) *metav1.PartialObjectMetadata {
+func AsPartialObjectMetadata(m metav1.Object) *metav1beta1.PartialObjectMetadata {
 	switch t := m.(type) {
 	case *metav1.ObjectMeta:
-		return &metav1.PartialObjectMetadata{ObjectMeta: *t}
+		return &metav1beta1.PartialObjectMetadata{ObjectMeta: *t}
 	default:
-		return &metav1.PartialObjectMetadata{
+		return &metav1beta1.PartialObjectMetadata{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:                       m.GetName(),
 				GenerateName:               m.GetGenerateName(),
@@ -136,7 +138,6 @@ func AsPartialObjectMetadata(m metav1.Object) *metav1.PartialObjectMetadata {
 				Finalizers:                 m.GetFinalizers(),
 				ClusterName:                m.GetClusterName(),
 				Initializers:               m.GetInitializers(),
-				ManagedFields:              m.GetManagedFields(),
 			},
 		}
 	}
