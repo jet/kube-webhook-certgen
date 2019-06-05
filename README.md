@@ -4,18 +4,40 @@
 
 # Kubernetes webhook certificate generator and patcher
 
-
-## Purpose
-This is a utility to generate certificates with long (100y) expiration, then patch Kubernetes Admission Webhooks with the CA. It is intended to provide a minimal solution for getting admission hooks working.
-
-This tool has two functions
-1. Create a ca, certificate and key and store them in a secret. If the secret already exists, do nothing
-2. Use the secret data to patch a mutating and validating webhook `ca` field
-
-The two-part approach is to allow easier working with helm charts, to first provision the certs, then patch the hooks after they are created with helm. If you have an alternative means of creating the certificaes, the tool can still be used to patch the webhooks.
-
-For more information about admission hooks see the [Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+## Overview
+Generates a CA and leaf certificate with a long (100y) expiration, then patches [Kubernetes Admission Webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+by setting the `caBundle` field with the generated CA. 
+Can optionally patch the hooks `failurePolicy` setting - useful in cases where a single Helm chart needs to provision resources
+and hooks simultaneously.
 
 ## Security Considerations
-This tool may not be adequate in all security environments. If a more complete solution is required, you may want to seek alternatives such as [jetstack/cert-manager](https://github.com/jetstack/cert-manager)
+This tool may not be adequate in all security environments. If a more complete solution is required, you may want to 
+seek alternatives such as [jetstack/cert-manager](https://github.com/jetstack/cert-manager)
+
+## Command line options
+```
+Use this to create a ca and signed certificates and patch admission webhooks to allow for quick
+                   installation and configuration of validating and admission webhooks.
+
+Usage:
+  kube-webhook-certgen [flags]
+  kube-webhook-certgen [command]
+
+Available Commands:
+  help        Help about any command
+  version     Prints the CLI version information
+
+Flags:
+  -h, --help                          help for kube-webhook-certgen
+      --host string                   Comma-separated hostnames and IPs to generate a certificate for
+      --kubeconfig string             Path to kubeconfig file: e.g. ~/.kube/kind-config-kind
+      --log-format string             Log format: text|json (default "text")
+      --log-level string              Log level: panic|fatal|error|warn|info|debug|trace (default "info")
+      --namespace string              Namespace of the secret where certificate information will be written
+      --patch-failure-policy string   If set, patch the webhooks with this failure policy. Valid options are Ignore or Fail
+      --patch-mutating                If true, patch mutatingwebhookconfiguration (default true)
+      --patch-validating              If true, patch validatingwebhookconfiguration (default true)
+      --secret-name string            Name of the secret where certificate information will be written
+      --webhook-name string           Name of validatingwebhookconfiguration and mutatingwebhookconfiguration that will be updated
+```
 

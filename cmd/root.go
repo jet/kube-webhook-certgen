@@ -1,12 +1,12 @@
 package cmd
 
 import (
+	"github.com/jet/kube-webhook-certgen/pkg/certs"
 	"github.com/jet/kube-webhook-certgen/pkg/k8s"
 	"github.com/onrik/logrus/filename"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
-	certutil "k8s.io/client-go/util/cert"
 	"os"
 )
 
@@ -58,13 +58,14 @@ func init() {
 	rootCmd.Flags().StringVar(&cfg.webhookName, "webhook-name", "", "Name of validatingwebhookconfiguration and mutatingwebhookconfiguration that will be updated")
 	rootCmd.Flags().BoolVar(&cfg.patchValidating, "patch-validating", true, "If true, patch validatingwebhookconfiguration")
 	rootCmd.Flags().BoolVar(&cfg.patchMutating, "patch-mutating", true, "If true, patch mutatingwebhookconfiguration")
-	rootCmd.Flags().StringVar(&cfg.patchFailurePolicy, "patch-failure-policy", "", "If set, patch the webhooks with this failure policy. Valid options are `Ignore` or `Fail`")
+	rootCmd.Flags().StringVar(&cfg.patchFailurePolicy, "patch-failure-policy", "", "If set, patch the webhooks with this failure policy. Valid options are Ignore or Fail")
 	rootCmd.Flags().StringVar(&cfg.kubeconfig, "kubeconfig", "", "Path to kubeconfig file: e.g. ~/.kube/kind-config-kind")
 	rootCmd.MarkFlagRequired("host")
 	rootCmd.MarkFlagRequired("secret-name")
 	rootCmd.MarkFlagRequired("namespace")
 	rootCmd.MarkFlagRequired("webhook-name")
 }
+
 func preRun(_ *cobra.Command, _ []string) {
 	l, err := log.ParseLevel(cfg.logLevel)
 	if err != nil {
@@ -79,13 +80,11 @@ func preRun(_ *cobra.Command, _ []string) {
 	}
 
 	switch cfg.patchFailurePolicy {
-	case "Ignore":
-		failurePolicy = admissionv1beta1.Fail
-		break
-	case "Fail":
-		failurePolicy = admissionv1beta1.Ignore
-		break
 	case "":
+		break
+	case "Ignore":
+	case "Fail":
+		failurePolicy = admissionv1beta1.FailurePolicyType(cfg.patchFailurePolicy)
 		break
 	default:
 		log.Fatalf("patch-failure-policy %s is not valid", cfg.patchFailurePolicy)
@@ -93,25 +92,24 @@ func preRun(_ *cobra.Command, _ []string) {
 	}
 
 }
+
 func patchCommand(_ *cobra.Command, _ []string) {
 	k := k8s.New("")
-	cert := k.GetCertFromSecret(cfg.secretName, cfg.namespace)
-	if cert == nil {
+	ca := k.GetCaFromSecret(cfg.secretName, cfg.namespace)
+	if ca == nil {
 		log.Info("creating new secret")
-		newCert, newKey, err := certutil.GenerateSelfSignedCertKey(cfg.host, nil, nil)
-		if err != nil {
-			log.WithError(err).Fatal("failed to generate cert")
-		}
-		k.SaveCertsToSecret(cfg.secretName, cfg.namespace, newCert, newKey)
+		newCa, newCert, newKey := certs.GenerateCerts(cfg.host)
+		ca = newCa
+		k.SaveCertsToSecret(cfg.secretName, cfg.namespace, ca, newCert, newKey)
 	} else {
 		log.Info("secret already exists")
 	}
 
-	if cert == nil {
+	if ca == nil {
 		log.Fatalf("no secret with '%s' in '%s'", cfg.secretName, cfg.namespace)
 	}
 
-	k.PatchWebhookConfigurations(cfg.webhookName, cert, &failurePolicy, cfg.patchMutating, cfg.patchValidating)
+	k.PatchWebhookConfigurations(cfg.webhookName, ca, &failurePolicy, cfg.patchMutating, cfg.patchValidating)
 }
 
 func getFormatter(logfmt string) log.Formatter {
