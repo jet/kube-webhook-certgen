@@ -1,157 +1,121 @@
 package k8s
 
 import (
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	"k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-	"sync"
 )
-
-type webhookCaPatch struct {
-	Op    string `json:"op"`
-	Path  string `json:"path"`
-	Value string `json:"value"`
-}
 
 type k8s struct {
 	clientset kubernetes.Interface
 }
 
-var (
-	clientm     sync.Mutex
-	client      *k8s
-	clientError error
-)
-
-func getk8s() *k8s {
-	if client == nil && clientError == nil {
-		clientm.Lock()
-		if client == nil && clientError == nil {
-			client, clientError = initClient()
-		}
-		clientm.Unlock()
-	}
-
-	if clientError != nil {
-		log.WithField("err", clientError).Fatal("Failed getting client")
-	}
-
-	return client
-}
-
-func initClient() (*k8s, error) {
-	// Create a config from the config file, or a InCluster config if empty.
-	config, err := clientcmd.BuildConfigFromFlags("", "")
+func New(kubeconfig string) *k8s {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "error building kubernetes config")
+		log.WithError(err).Fatal("error building kubernetes config")
 	}
 
-	// Create the client.
 	c, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating kubernetes client")
+		log.WithError(err).Fatal("error creating kubernetes client")
 	}
 
-	return &k8s{clientset: c}, err
-}
-
-func createPatch(numWebhooks int, caBundle string) []byte {
-	patches := make([]webhookCaPatch, numWebhooks)
-	for i := 0; i < numWebhooks; i++ {
-		patches[i] = webhookCaPatch{
-			Op:    "add",
-			Path:  fmt.Sprintf("/webhooks/%d/clientConfig/caBundle", i),
-			Value: caBundle}
-	}
-
-	dat, _ := json.Marshal(patches)
-	return dat
+	return &k8s{clientset: c}
 }
 
 // PatchWebhookConfigurations will patch validatingWebhook and mutatingWebhook clientConfig configurations with
-// the provided ca data.
-func PatchWebhookConfigurations(configurationNames string, ca []byte, patchMutating bool, patchValidating bool) {
-	log.Debugf("Patching webhook configurations '%s' mutating=%t, validating=%t", configurationNames, patchMutating, patchValidating)
-	caBase64 := base64.StdEncoding.EncodeToString(ca)
-	k8s := getk8s()
+// the provided ca data. If failurePolicy is provided, patch all webhooks with this value
+func (k8s *k8s) PatchWebhookConfigurations(
+	configurationNames string, ca []byte,
+	failurePolicy *admissionv1beta1.FailurePolicyType,
+	patchMutating bool, patchValidating bool) {
+
+	log.Infof("patching webhook configurations '%s' mutating=%t, validating=%t", configurationNames, patchMutating, patchValidating)
+
 	if patchValidating {
 		valHook, err := k8s.clientset.
 			AdmissionregistrationV1beta1().
 			ValidatingWebhookConfigurations().
 			Get(configurationNames, metav1.GetOptions{})
+
 		if err != nil {
-			log.WithField("err", err).Fatal("Failed getting validating webhook")
+			log.WithField("err", err).Fatal("failed getting validating webhook")
 		}
-		patch := createPatch(len(valHook.Webhooks), caBase64)
-		_, err = k8s.clientset.
-			AdmissionregistrationV1beta1().
-			ValidatingWebhookConfigurations().
-			Patch(configurationNames, types.JSONPatchType, patch)
-		if err != nil {
-			log.WithField("err", err).Fatal("Failed patching validating webhook")
+
+		for i := range valHook.Webhooks {
+			h := &valHook.Webhooks[i]
+			h.ClientConfig.CABundle = ca
+			if failurePolicy != nil {
+				h.FailurePolicy = failurePolicy
+			}
 		}
-		log.Debug("Patched validating hook")
+
+		if _, err = k8s.clientset.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Update(valHook); err != nil {
+			log.WithField("err", err).Fatal("failed patching validating webhook")
+		}
+		log.Debug("patched validating hook")
 	} else {
-		log.Debug("Validating hook patching not required")
+		log.Debug("validating hook patching not required")
 	}
 
 	if patchMutating {
-		mut, err := k8s.clientset.
+		mutHook, err := k8s.clientset.
 			AdmissionregistrationV1beta1().
 			MutatingWebhookConfigurations().
 			Get(configurationNames, metav1.GetOptions{})
 		if err != nil {
-			log.WithField("err", err).Fatal("Failed getting validating webhook")
+			log.WithField("err", err).Fatal("failed getting validating webhook")
 		}
-		patch := createPatch(len(mut.Webhooks), caBase64)
-		_, err = k8s.clientset.
-			AdmissionregistrationV1beta1().
-			MutatingWebhookConfigurations().
-			Patch(configurationNames, types.JSONPatchType, patch)
-		if err != nil {
-			log.WithField("err", err).Fatal("Failed patching validating webhook")
+
+		for i := range mutHook.Webhooks {
+			h := &mutHook.Webhooks[i]
+			h.ClientConfig.CABundle = ca
+			if failurePolicy != nil {
+				h.FailurePolicy = failurePolicy
+			}
 		}
-		log.Debug("Patched mutating hook")
+
+		if _, err = k8s.clientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Update(mutHook); err != nil {
+			log.WithField("err", err).Fatal("failed patching validating webhook")
+		}
+		log.Debug("patched mutating hook")
 	} else {
-		log.Debug("Mutating hook patching not required")
+		log.Debug("mutating hook patching not required")
 	}
+
+	log.Info("Patched hook(s)")
 }
 
-// GetCaFromCertificate will check for the presence of a secret. If it exists, will return the content of the
+// GetCaFromSecret will check for the presence of a secret. If it exists, will return the content of the
 // "ca" from the secret, otherwise will return nil
-func GetCaFromCertificate(secretName string, namespace string) []byte {
-
-	k8s := getk8s()
-	log.Debugf("Getting secret '%s' in namespace '%s'", secretName, namespace)
+func (k8s *k8s) GetCaFromSecret(secretName string, namespace string) []byte {
+	log.Debugf("getting secret '%s' in namespace '%s'", secretName, namespace)
 	secret, err := k8s.clientset.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			log.WithField("err", err).Info("No secret found")
+			log.WithField("err", err).Info("no secret found")
 			return nil
 		}
-		log.WithField("err", err).Fatal("Error getting secret")
+		log.WithField("err", err).Fatal("error getting secret")
 	}
 
 	data := secret.Data["ca"]
 	if data == nil {
-		log.Fatal("Got secret, but it did not contain a 'ca' key")
+		log.Fatal("got secret, but it did not contain a 'cert' key")
 	}
-	log.Debug("Got secret")
+	log.Debug("got secret")
 	return data
 }
 
 // SaveCertsToSecret saves the provided ca, cert and key into a secret in the specified namespace.
-func SaveCertsToSecret(secretName string, namespace string, ca []byte, cert []byte, key []byte) {
+func (k8s *k8s) SaveCertsToSecret(secretName string, namespace string, ca, cert, key []byte) {
 
-	log.Debugf("Saving to secret '%s' in namespace '%s'", secretName, namespace)
+	log.Debugf("saving to secret '%s' in namespace '%s'", secretName, namespace)
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: secretName,
@@ -159,10 +123,10 @@ func SaveCertsToSecret(secretName string, namespace string, ca []byte, cert []by
 		Data: map[string][]byte{"ca": ca, "cert": cert, "key": key},
 	}
 
-	log.Debug("Saving secret")
-	_, err := getk8s().clientset.CoreV1().Secrets(namespace).Create(secret)
+	log.Debug("saving secret")
+	_, err := k8s.clientset.CoreV1().Secrets(namespace).Create(secret)
 	if err != nil {
-		log.WithField("err", err).Fatal("Failed creating secret")
+		log.WithField("err", err).Fatal("failed creating secret")
 	}
-	log.Debug("Saved secret")
+	log.Debug("saved secret")
 }

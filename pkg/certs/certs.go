@@ -40,14 +40,14 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, &rootKey.PublicKey, rootKey)
 	if err != nil {
-		log.WithField("err", err).Fatal("Failed createCertificate for Ca")
+		log.WithField("err", err).Fatal("failed createCertificate for Ca")
 	}
 
 	ca = encodeCert(derBytes)
 
 	leafKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		log.WithField("err", err).Fatal("Failed createLeafKey for certificate")
+		log.WithField("err", err).Fatal("failed createLeafKey for certificate")
 	}
 
 	key = encodeKey(leafKey)
@@ -76,7 +76,7 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 
 	derBytes, err = x509.CreateCertificate(rand.Reader, &leafTemplate, &rootTemplate, &leafKey.PublicKey, rootKey)
 	if err != nil {
-		log.WithField("err", err).Fatal("Failed createLeaf certificate")
+		log.WithField("err", err).Fatal("failed createLeaf certificate")
 	}
 
 	cert = encodeCert(derBytes)
@@ -86,7 +86,7 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 func encodeKey(key *ecdsa.PrivateKey) []byte {
 	b, err := x509.MarshalECPrivateKey(key)
 	if err != nil {
-		log.WithField("err", err).Fatal("Unable to marshal ECDSA private key")
+		log.WithField("err", err).Fatal("unable to marshal ECDSA private key")
 	}
 	return pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: b})
 }
