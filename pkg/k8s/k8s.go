@@ -87,6 +87,8 @@ func (k8s *k8s) PatchWebhookConfigurations(
 	} else {
 		log.Debug("mutating hook patching not required")
 	}
+
+	log.Info("Patched hook(s)")
 }
 
 // GetCaFromSecret will check for the presence of a secret. If it exists, will return the content of the
