@@ -14,8 +14,8 @@ var (
 		Short: "Create certificates and patch them to admission hooks",
 		Long: `Use this to create a ca and signed certificates and patch admission webhooks to allow for quick
 	           installation and configuration of validating and admission webhooks.`,
-	    PreRun: configureLogging,
-		Run: rootCommand,
+		PreRun: configureLogging,
+		Run:    rootCommand,
 	}
 
 	cfg = struct {

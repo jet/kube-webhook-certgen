@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/jet/kube-webhook-certgen/pkg/certs"
 	"github.com/jet/kube-webhook-certgen/pkg/k8s"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var (

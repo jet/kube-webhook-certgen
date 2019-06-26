@@ -3,9 +3,9 @@ package cmd
 import (
 	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/jet/kube-webhook-certgen/pkg/k8s"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 )
 
