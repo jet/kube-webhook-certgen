@@ -35,7 +35,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 	failurePolicy *admissionv1beta1.FailurePolicyType,
 	patchMutating bool, patchValidating bool) {
 
-	log.Infof("patching webhook configurations '%s' mutating=%t, validating=%t", configurationNames, patchMutating, patchValidating)
+	log.Infof("patching webhook configurations '%s' mutating=%t, validating=%t, failurePolicy=%s", configurationNames, patchMutating, patchValidating, *failurePolicy)
 
 	if patchValidating {
 		valHook, err := k8s.clientset.
@@ -50,7 +50,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 		for i := range valHook.Webhooks {
 			h := &valHook.Webhooks[i]
 			h.ClientConfig.CABundle = ca
-			if failurePolicy != nil {
+			if *failurePolicy != "" {
 				h.FailurePolicy = failurePolicy
 			}
 		}
@@ -75,7 +75,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 		for i := range mutHook.Webhooks {
 			h := &mutHook.Webhooks[i]
 			h.ClientConfig.CABundle = ca
-			if failurePolicy != nil {
+			if *failurePolicy != "" {
 				h.FailurePolicy = failurePolicy
 			}
 		}
