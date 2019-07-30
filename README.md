@@ -79,3 +79,5 @@ Global Flags:
       --log-level string    Log level: panic|fatal|error|warn|info|debug|trace (default "info")
 ```
 
+## Known Users
+- [stable/prometheus-operator](https://github.com/helm/charts) helm chart
