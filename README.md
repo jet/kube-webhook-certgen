@@ -1,6 +1,6 @@
 [![Build Status](https://dev.azure.com/jet-opensource/opensource/_apis/build/status/kube-webhook-certgen/kube-webhook-certgen.master?branchName=master)](https://dev.azure.com/jet-opensource/opensource/_build/latest?definitionId=15&branchName=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jet/kube-webhook-certgen)](https://goreportcard.com/report/github.com/jet/kube-webhook-certgen)
-![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/jet/kube-webhook-certgen?sort=semver)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/jet/kube-webhook-certgen?sort=semver)](https://github.com/jet/kube-webhook-certgen/releases/latest)
 [![Docker Pulls](https://img.shields.io/docker/pulls/jettech/kube-webhook-certgen.svg)](https://hub.docker.com/r/jettech/kube-webhook-certgen)
 
 # Kubernetes webhook certificate generator and patcher
