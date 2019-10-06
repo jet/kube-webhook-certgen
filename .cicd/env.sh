@@ -2,7 +2,7 @@
 set -eox pipefail
 
 export dockerRepo="jettech/kube-webhook-certgen"
-export mod="$(head -n 1 go.mod | cut -f 2 -d ' ')"
+export mod="github.com/jet/kube-webhook-certgen" #"$(head -n 1 go.mod | cut -f 2 -d ' ')"
 export rev=$(git rev-parse HEAD)
 export tag=$(git tag --points-at HEAD)
 export buildTime=$(date -u +%FT%TZ)

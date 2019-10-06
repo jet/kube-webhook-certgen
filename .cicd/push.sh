@@ -8,22 +8,27 @@ function exists() {
 }
 
 dmtag() {
-  docker manifest annotate $dockerRepo:$vers $dockerRepo:$vers-$1 --os linux --arch $1
+  docker manifest annotate $dockerRepo:$vers $dockerRepo:$1-$vers --os linux --arch $1
 }
 
+dpush() {
+  docker push $dockerRepo:$1-$vers
+}
 
 if exists $dockerRepo $vers; then
     echo $dockerRepo:$vers already exists, will not overwrite
     exit 1
 else
     docker login -u jettech -p $jettechPassword
+    dpush amd64
+    dpush arm
+    dpush arm64
     docker manifest create $dockerRepo:$vers \
-      $dockerRepo:$vers-amd64 \
-      $dockerRepo:$vers-arm   \
-      $dockerRepo:$vers-arm64 --amend
+      $dockerRepo:amd64-$vers \
+      $dockerRepo:arm-$vers   \
+      $dockerRepo:arm64-$vers
     dmtag amd64
     dmtag arm
     dmtag arm64
-
     docker manifest push $dockerRepo:$vers
 fi
