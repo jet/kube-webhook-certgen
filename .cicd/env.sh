@@ -6,6 +6,7 @@ export mod="$(head -n 1 go.mod | cut -f 2 -d ' ')"
 export rev=$(git rev-parse HEAD)
 export tag=$(git tag --points-at HEAD)
 export buildTime=$(date -u +%FT%TZ)
+export DOCKER_CLI_EXPERIMENTAL=enabled
 
 # This will break if there are multiple tags set to the same commit, which is what we want
 if [ $tag ]; then

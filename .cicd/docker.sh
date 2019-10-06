@@ -6,7 +6,13 @@ set -eox pipefail
 rm -rf dockerbuild > /dev/null
 mkdir dockerbuild
 cp Dockerfile dockerbuild
-mv kube-webhook-certgen dockerbuild
 
-docker build -f dockerbuild/Dockerfile dockerbuild -t $dockerRepo:$vers
-docker run --rm $dockerRepo:$vers version
+dbuild() {
+  cp kube-webhook-certgen-$1 dockerbuild/kube-webhook-certgen
+  docker build -f dockerbuild/Dockerfile dockerbuild -t $dockerRepo:$vers-$1
+}
+
+dbuild amd64
+dbuild arm
+dbuild arm64
+

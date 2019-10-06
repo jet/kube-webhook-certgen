@@ -1,4 +1,4 @@
 .idea
-kube-webhook-certgen
+kube-webhook-certgen*
 TEST-ALL.xml
 dockerbuild
