@@ -4,7 +4,7 @@ set -eox pipefail
 . .cicd/env.sh
 
 build() {
-  ldflags="-X $mod/core.Version=$vers -X $mod/core.BuildTime=$buildTime"
+  ldflags="-X $mod/core.Version=$vers -X $mod/core.BuildTime=$buildTime -X \"$mod/core.GoVersion=$goVersion\""
   docker run --rm \
     -v "$(pwd):/go/src/$mod" \
     -w "/go/src/$mod"  \
