@@ -62,7 +62,7 @@ func TestSaveCertsToSecret(t *testing.T) {
 
 	ca, cert, key := genSecretData()
 
-	k.SaveCertsToSecret(testSecretName, testNamespace, ca, cert, key)
+	k.SaveCertsToSecret(testSecretName, testNamespace, "cert", "key", ca, cert, key)
 
 	secret, _ := k.clientset.CoreV1().Secrets(testNamespace).Get(testSecretName, metav1.GetOptions{})
 
@@ -78,7 +78,7 @@ func TestSaveCertsToSecret(t *testing.T) {
 func TestSaveThenLoadSecret(t *testing.T) {
 	k := newTestSimpleK8s()
 	ca, cert, key := genSecretData()
-	k.SaveCertsToSecret(testSecretName, testNamespace, ca, cert, key)
+	k.SaveCertsToSecret(testSecretName, testNamespace, "cert", "key", ca, cert, key)
 	retrievedCert := k.GetCaFromSecret(testSecretName, testNamespace)
 	if !bytes.Equal(retrievedCert, ca) {
 		t.Error("Was not able to retrieve CA information that was saved")

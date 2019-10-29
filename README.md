@@ -47,14 +47,16 @@ Usage:
   kube-webhook-certgen create [flags]
 
 Flags:
+      --cert-name string     Name of cert file in the secret (default "cert")
   -h, --help                 help for create
       --host string          Comma-separated hostnames and IPs to generate a certificate for
+      --key-name string      Name of key file in the secret (default "key")
       --namespace string     Namespace of the secret where certificate information will be written
       --secret-name string   Name of the secret where certificate information will be written
 
 Global Flags:
       --kubeconfig string   Path to kubeconfig file: e.g. ~/.kube/kind-config-kind
-      --log-format string   Log format: text|json (default "text")
+      --log-format string   Log format: text|json (default "json")
       --log-level string    Log level: panic|fatal|error|warn|info|debug|trace (default "info")
 ```
 
