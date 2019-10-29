@@ -16,6 +16,7 @@ var version = &cobra.Command{
 func versionCmdRun(cmd *cobra.Command, args []string) {
 	fmt.Printf("%s\n", core.Version)
 	fmt.Printf("build %s\n", core.BuildTime)
+	fmt.Printf("%s\n", core.GoVersion)
 }
 
 func init() {
