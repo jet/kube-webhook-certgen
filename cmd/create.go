@@ -23,7 +23,7 @@ func createCommand(cmd *cobra.Command, args []string) {
 		log.Info("creating new secret")
 		newCa, newCert, newKey := certs.GenerateCerts(cfg.host)
 		ca = newCa
-		k.SaveCertsToSecret(cfg.secretName, cfg.namespace, ca, newCert, newKey)
+		k.SaveCertsToSecret(cfg.secretName, cfg.namespace, cfg.certName, cfg.keyName, ca, newCert, newKey)
 	} else {
 		log.Info("secret already exists")
 	}
@@ -34,6 +34,8 @@ func init() {
 	create.Flags().StringVar(&cfg.host, "host", "", "Comma-separated hostnames and IPs to generate a certificate for")
 	create.Flags().StringVar(&cfg.secretName, "secret-name", "", "Name of the secret where certificate information will be written")
 	create.Flags().StringVar(&cfg.namespace, "namespace", "", "Namespace of the secret where certificate information will be written")
+	create.Flags().StringVar(&cfg.certName, "cert-name", "cert", "Name of cert file in the secret")
+	create.Flags().StringVar(&cfg.keyName, "key-name", "key", "Name of key file in the secret")
 	create.MarkFlagRequired("host")
 	create.MarkFlagRequired("secret-name")
 	create.MarkFlagRequired("namespace")

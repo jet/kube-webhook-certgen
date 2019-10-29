@@ -113,14 +113,14 @@ func (k8s *k8s) GetCaFromSecret(secretName string, namespace string) []byte {
 }
 
 // SaveCertsToSecret saves the provided ca, cert and key into a secret in the specified namespace.
-func (k8s *k8s) SaveCertsToSecret(secretName string, namespace string, ca, cert, key []byte) {
+func (k8s *k8s) SaveCertsToSecret(secretName, namespace, certName, keyName string, ca, cert, key []byte) {
 
 	log.Debugf("saving to secret '%s' in namespace '%s'", secretName, namespace)
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: secretName,
 		},
-		Data: map[string][]byte{"ca": ca, "cert": cert, "key": key},
+		Data: map[string][]byte{"ca": ca, certName: cert, keyName: key},
 	}
 
 	log.Debug("saving secret")
