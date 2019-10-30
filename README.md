@@ -62,7 +62,7 @@ Global Flags:
 
 ### Patch
 ```
-Patch a validatingwebhookconfiguration and mutatingwebhookconfiguration 'webhook-name' by using the ca from 'secret-name' in 'namespace'
+Patch a validatingwebhookconfiguration and mutatingwebhookconfiguration by using the ca from 'secret-name' in 'namespace'
 
 Usage:
   kube-webhook-certgen patch [flags]
@@ -71,14 +71,13 @@ Flags:
   -h, --help                          help for patch
       --namespace string              Namespace of the secret where certificate information will be read from
       --patch-failure-policy string   If set, patch the webhooks with this failure policy. Valid options are Ignore or Fail
-      --patch-mutating                If true, patch mutatingwebhookconfiguration (default true)
-      --patch-validating              If true, patch validatingwebhookconfiguration (default true)
+      --patch-mutating strings        Names of mutating webhooks to patch
+      --patch-validating strings      Names of validating webhooks to patch
       --secret-name string            Name of the secret where certificate information will be read from
-      --webhook-name string           Name of validatingwebhookconfiguration and mutatingwebhookconfiguration that will be updated
 
 Global Flags:
       --kubeconfig string   Path to kubeconfig file: e.g. ~/.kube/kind-config-kind
-      --log-format string   Log format: text|json (default "text")
+      --log-format string   Log format: text|json (default "json")
       --log-level string    Log level: panic|fatal|error|warn|info|debug|trace (default "info")
 ```
 

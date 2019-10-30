@@ -26,9 +26,8 @@ var (
 		certName           string
 		keyName            string
 		host               string
-		webhookName        string
-		patchValidating    bool
-		patchMutating      bool
+		patchValidating    []string
+		patchMutating      []string
 		patchFailurePolicy string
 		kubeconfig         string
 	}{}

@@ -110,7 +110,8 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 			},
 			Webhooks: []v1beta1.Webhook{{Name: "v1"}, {Name: "v2"}}})
 
-	k.PatchWebhookConfigurations(testWebhookName, ca, &fail, true, true)
+	k.UpdateMutating(testWebhookName, ca, &fail)
+	k.UpdateValidating(testWebhookName, ca, &fail)
 
 	whmut, err := k.clientset.
 		AdmissionregistrationV1beta1().
