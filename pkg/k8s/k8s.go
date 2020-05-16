@@ -1,8 +1,9 @@
 package k8s
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
-	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	admissionv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,11 +30,11 @@ func New(kubeconfig string) *k8s {
 }
 
 // UpdateMutating will amend a validating webhook configuration with the CA and policyType specified
-func (k8s *k8s) UpdateValidating(name string, ca []byte, policyType *admissionv1beta1.FailurePolicyType) {
+func (k8s *k8s) UpdateValidating(name string, ca []byte, policyType *admissionv1.FailurePolicyType) {
 	valHook, err := k8s.clientset.
-		AdmissionregistrationV1beta1().
+		AdmissionregistrationV1().
 		ValidatingWebhookConfigurations().
-		Get(name, metav1.GetOptions{})
+		Get(context.Background(), name, metav1.GetOptions{})
 
 	if err != nil {
 		log.WithField("err", err).Fatal("failed getting validating webhook")
@@ -47,18 +48,20 @@ func (k8s *k8s) UpdateValidating(name string, ca []byte, policyType *admissionv1
 		}
 	}
 
-	if _, err = k8s.clientset.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Update(valHook); err != nil {
+	if _, err = k8s.clientset.AdmissionregistrationV1().
+		ValidatingWebhookConfigurations().
+		Update(context.Background(), valHook, metav1.UpdateOptions{}); err != nil {
 		log.WithField("err", err).Fatal("failed patching validating webhook")
 	}
 	log.Debug("patched validating hook")
 }
 
 // UpdateMutating will amend a mutating webhook configuration with the CA and policyType specified
-func (k8s *k8s) UpdateMutating(names string, ca []byte, policyType *admissionv1beta1.FailurePolicyType) {
+func (k8s *k8s) UpdateMutating(names string, ca []byte, policyType *admissionv1.FailurePolicyType) {
 	mutHook, err := k8s.clientset.
-		AdmissionregistrationV1beta1().
+		AdmissionregistrationV1().
 		MutatingWebhookConfigurations().
-		Get(names, metav1.GetOptions{})
+		Get(context.Background(), names, metav1.GetOptions{})
 	if err != nil {
 		log.WithField("err", err).Fatal("failed getting validating webhook")
 	}
@@ -71,7 +74,9 @@ func (k8s *k8s) UpdateMutating(names string, ca []byte, policyType *admissionv1b
 		}
 	}
 
-	if _, err = k8s.clientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Update(mutHook); err != nil {
+	if _, err = k8s.clientset.AdmissionregistrationV1().
+		MutatingWebhookConfigurations().
+		Update(context.Background(), mutHook, metav1.UpdateOptions{}); err != nil {
 		log.WithField("err", err).Fatal("failed patching validating webhook")
 	}
 	log.Debug("patched mutating hook")
@@ -81,7 +86,7 @@ func (k8s *k8s) UpdateMutating(names string, ca []byte, policyType *admissionv1b
 // "ca" from the secret, otherwise will return nil
 func (k8s *k8s) GetCaFromSecret(secretName string, namespace string) []byte {
 	log.Debugf("getting secret '%s' in namespace '%s'", secretName, namespace)
-	secret, err := k8s.clientset.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+	secret, err := k8s.clientset.CoreV1().Secrets(namespace).Get(context.Background(), secretName, metav1.GetOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			log.WithField("err", err).Info("no secret found")
@@ -110,7 +115,7 @@ func (k8s *k8s) SaveCertsToSecret(secretName, namespace, certName, keyName strin
 	}
 
 	log.Debug("saving secret")
-	_, err := k8s.clientset.CoreV1().Secrets(namespace).Create(secret)
+	_, err := k8s.clientset.CoreV1().Secrets(namespace).Create(context.Background(), secret, metav1.CreateOptions{})
 	if err != nil {
 		log.WithField("err", err).Fatal("failed creating secret")
 	}

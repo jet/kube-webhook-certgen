@@ -2,13 +2,14 @@ package k8s
 
 import (
 	"bytes"
-	"k8s.io/api/admissionregistration/v1beta1"
-	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	"context"
+	admissionv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	"math/rand"
 	"testing"
+	"time"
 )
 
 const (
@@ -18,8 +19,8 @@ const (
 )
 
 var (
-	fail   = admissionv1beta1.Fail
-	ignore = admissionv1beta1.Ignore
+	fail   = admissionv1.Fail
+	ignore = admissionv1.Ignore
 )
 
 func genSecretData() (ca, cert, key []byte) {
@@ -49,7 +50,7 @@ func TestGetCaFromCertificate(t *testing.T) {
 		Data: map[string][]byte{"ca": ca, "cert": cert, "key": key},
 	}
 
-	k.clientset.CoreV1().Secrets(testNamespace).Create(secret)
+	k.clientset.CoreV1().Secrets(testNamespace).Create(context.Background(), secret, metav1.CreateOptions{})
 
 	retrievedCa := k.GetCaFromSecret(testSecretName, testNamespace)
 	if !bytes.Equal(retrievedCa, ca) {
@@ -64,7 +65,7 @@ func TestSaveCertsToSecret(t *testing.T) {
 
 	k.SaveCertsToSecret(testSecretName, testNamespace, "cert", "key", ca, cert, key)
 
-	secret, _ := k.clientset.CoreV1().Secrets(testNamespace).Get(testSecretName, metav1.GetOptions{})
+	secret, _ := k.clientset.CoreV1().Secrets(testNamespace).Get(context.Background(), testSecretName, metav1.GetOptions{})
 
 	if !bytes.Equal(secret.Data["cert"], cert) {
 		t.Error("'cert' saved data does not match retrieved")
@@ -91,24 +92,25 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 	ca, _, _ := genSecretData()
 
 	k.clientset.
-		AdmissionregistrationV1beta1().
+		AdmissionregistrationV1().
 		MutatingWebhookConfigurations().
-		Create(&v1beta1.MutatingWebhookConfiguration{
+		Create(context.Background(), &admissionv1.MutatingWebhookConfiguration{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: testWebhookName,
 			},
-			Webhooks: []v1beta1.Webhook{{Name: "m1"}, {Name: "m2"}}})
+			Webhooks: []admissionv1.MutatingWebhook{{Name: "m1"}, {Name: "m2"}}}, metav1.CreateOptions{})
 
 	k.clientset.
-		AdmissionregistrationV1beta1().
+		AdmissionregistrationV1().
 		ValidatingWebhookConfigurations().
-		Create(&v1beta1.ValidatingWebhookConfiguration{
+		Create(context.Background(), &admissionv1.ValidatingWebhookConfiguration{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: testWebhookName,
 			},
-			Webhooks: []v1beta1.Webhook{{Name: "v1"}, {Name: "v2"}}})
+			Webhooks: []admissionv1.ValidatingWebhook{{Name: "v1"}, {Name: "v2"}}}, metav1.CreateOptions{})
+	time.Sleep(time.Second)
 
 	k.UpdateMutating(testWebhookName, ca, &fail)
 	k.UpdateValidating(testWebhookName, ca, &fail)
@@ -116,7 +118,7 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 	whmut, err := k.clientset.
 		AdmissionregistrationV1beta1().
 		MutatingWebhookConfigurations().
-		Get(testWebhookName, metav1.GetOptions{})
+		Get(context.Background(), testWebhookName, metav1.GetOptions{})
 
 	if err != nil {
 		t.Error(err)
@@ -125,7 +127,7 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 	whval, err := k.clientset.
 		AdmissionregistrationV1beta1().
 		MutatingWebhookConfigurations().
-		Get(testWebhookName, metav1.GetOptions{})
+		Get(context.Background(), testWebhookName, metav1.GetOptions{})
 
 	if err != nil {
 		t.Error(err)
