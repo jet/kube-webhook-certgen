@@ -8,6 +8,7 @@ require (
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/onrik/logrus v0.5.1
+	github.com/pkg/errors v0.8.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/objx v0.1.1 // indirect

@@ -1,11 +1,14 @@
 package cmd
 
 import (
+	"fmt"
+	"github.com/jet/kube-webhook-certgen/core"
 	"github.com/onrik/logrus/filename"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	admissionv1 "k8s.io/api/admissionregistration/v1"
 	"os"
+	"runtime"
 )
 
 var (
@@ -14,8 +17,9 @@ var (
 		Short: "Create certificates and patch them to admission hooks",
 		Long: `Use this to create a ca and signed certificates and patch admission webhooks to allow for quick
 	           installation and configuration of validating and admission webhooks.`,
-		PreRun: configureLogging,
-		Run:    rootCommand,
+		PersistentPreRun: configureLogging,
+		Run:              rootCommand,
+		Version:          fmt.Sprintf("version: %s build: %s, go: %s", core.Version, core.BuildTime, runtime.Version()),
 	}
 
 	cfg = struct {
@@ -25,7 +29,7 @@ var (
 		namespace          string
 		certName           string
 		keyName            string
-		host               string
+		hosts              []string
 		patchValidating    []string
 		patchMutating      []string
 		patchFailurePolicy string
@@ -49,9 +53,9 @@ func init() {
 	log.SetOutput(os.Stdout)
 	log.SetLevel(log.TraceLevel)
 	rootCmd.Flags()
-	rootCmd.PersistentFlags().StringVar(&cfg.logLevel, "log-level", "info", "Log level: panic|fatal|error|warn|info|debug|trace")
-	rootCmd.PersistentFlags().StringVar(&cfg.logfmt, "log-format", "json", "Log format: text|json")
-	rootCmd.PersistentFlags().StringVar(&cfg.kubeconfig, "kubeconfig", "", "Path to kubeconfig file: e.g. ~/.kube/kind-config-kind")
+	rootCmd.PersistentFlags().StringVar(&cfg.logLevel, "log-level", "info", "Log level: panic|fatal|error|warn|info|debug|trace.")
+	rootCmd.PersistentFlags().StringVar(&cfg.logfmt, "log-format", "json", "Log format: text|json.")
+	rootCmd.PersistentFlags().StringVar(&cfg.kubeconfig, "kubeconfig", "", "Path to kubeconfig file: e.g. '~/.kube/kind-config-kind'.")
 }
 
 func configureLogging(_ *cobra.Command, _ []string) {

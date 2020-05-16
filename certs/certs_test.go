@@ -16,8 +16,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestCertificateCreation(t *testing.T) {
-
-	ca, cert, key := GenerateCerts("localhost")
+	ca, cert, key, err := GenerateCerts([]string{"localhost"})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	c, err := tls.X509KeyPair(cert, key)
 	if err != nil {

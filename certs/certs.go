@@ -6,22 +6,22 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"math/big"
 	"net"
-	"strings"
 	"time"
 )
 
 // GenerateCerts venerates a ca with a leaf certificate and key and returns the ca, cert and key as PEM encoded slices
-func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
+func GenerateCerts(hosts []string) (ca []byte, cert []byte, key []byte, err error) {
 	notBefore := time.Now().Add(time.Minute * -5)
 	notAfter := notBefore.Add(100 * 365 * 24 * time.Hour)
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		log.WithField("err", err).Fatal("failed to generate serial number")
+		return nil, nil, nil, errors.Wrap(err, "failed to generate serial number")
 	}
 	rootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -40,21 +40,24 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, &rootKey.PublicKey, rootKey)
 	if err != nil {
-		log.WithField("err", err).Fatal("failed createCertificate for Ca")
+		return nil, nil, nil, errors.Wrap(err, "failed createCertificate for Ca")
 	}
 
 	ca = encodeCert(derBytes)
 
 	leafKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		log.WithField("err", err).Fatal("failed createLeafKey for certificate")
+		return nil, nil, nil, errors.Wrap(err, "failed createLeafKey for certificate")
 	}
 
-	key = encodeKey(leafKey)
+	key, err = encodeKey(leafKey)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	serialNumber, err = rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		log.WithField("err", err).Fatal("failed to generate serial number")
+		return nil, nil, nil, errors.Wrap(err, "failed to generate serial number")
 	}
 	leafTemplate := x509.Certificate{
 		SerialNumber:          serialNumber,
@@ -65,7 +68,6 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 		BasicConstraintsValid: true,
 		IsCA:                  false,
 	}
-	hosts := strings.Split(host, ",")
 	for _, h := range hosts {
 		if ip := net.ParseIP(h); ip != nil {
 			leafTemplate.IPAddresses = append(leafTemplate.IPAddresses, ip)
@@ -76,19 +78,19 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 
 	derBytes, err = x509.CreateCertificate(rand.Reader, &leafTemplate, &rootTemplate, &leafKey.PublicKey, rootKey)
 	if err != nil {
-		log.WithField("err", err).Fatal("failed createLeaf certificate")
+		return nil, nil, nil, errors.Wrap(err, "failed createLeaf certificate")
 	}
 
 	cert = encodeCert(derBytes)
-	return ca, cert, key
+	return ca, cert, key, nil
 }
 
-func encodeKey(key *ecdsa.PrivateKey) []byte {
+func encodeKey(key *ecdsa.PrivateKey) ([]byte, error) {
 	b, err := x509.MarshalECPrivateKey(key)
 	if err != nil {
-		log.WithField("err", err).Fatal("unable to marshal ECDSA private key")
+		return nil, errors.Wrap(err, "unable to marshal ECDSA private key")
 	}
-	return pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: b})
+	return pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: b}), nil
 }
 
 func encodeCert(derBytes []byte) []byte {
