@@ -11,7 +11,7 @@ build() {
     -e CGO_ENABLED=0   \
     -e GOOS=linux      \
     -e GOARCH=$1       \
-    golang:1.13-stretch \
+    golang:1.14-stretch \
       go build -mod=vendor -o kube-webhook-certgen-$1 -ldflags "$ldflags"
 }
 
