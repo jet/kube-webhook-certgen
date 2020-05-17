@@ -12,7 +12,7 @@ command="go test -v ./... -coverprofile coverage.txt -covermode count 2>&1 > tes
   cat testresults.txt | go-junit-report > TEST-ALL.xml; \
   gocov convert coverage.txt > coverage.json;           \
   gocov-xml < coverage.json > coverage.xml;             \
-  mkdir coverage;                                       \
+  mkdir coverage || true                                \
   gocov-html < coverage.json > coverage/index.html"
 
 docker run --rm \
