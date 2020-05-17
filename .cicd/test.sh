@@ -3,10 +3,6 @@ set -eox pipefail
 
 . .cicd/env.sh
 
-
-
-
-
 command="go test -v ./... -coverprofile coverage.txt -covermode count 2>&1 > testresults.txt; \
   go get github.com/jstemmer/go-junit-report; \
   go get github.com/axw/gocov/gocov;          \
