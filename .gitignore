@@ -1,4 +1,6 @@
 .idea
 kube-webhook-certgen*
 TEST-ALL.xml
+coverage.txt
+testresults.txt
 dockerbuild

@@ -64,6 +64,32 @@ func TestGetCaFromCertificate(t *testing.T) {
 	}
 }
 
+func TestGetCaFromCertificateShouldFailWhenMissing(t *testing.T) {
+	client, dyn := clients()
+	k := k8s.NewFake(client, dyn)
+	ca, cert, key := genSecretData()
+
+	secret := &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: testSecretName,
+		},
+		Data: map[string][]byte{"ca": ca, "cert": cert, "key": key},
+	}
+	client.CoreV1().Secrets(testNamespace).Create(context.Background(), secret, metav1.CreateOptions{})
+
+	// Should not retrieve data when wrong secret name
+	retrievedCa, ok := k.GetCaFromSecret("junk", testNamespace, "ca")
+	if ok || retrievedCa != nil {
+		t.Fatal("Expected error due to ca data missing")
+	}
+
+	// Should not retrieve data when wrong key
+	retrievedCa, ok = k.GetCaFromSecret(testSecretName, testNamespace, "junk")
+	if ok || retrievedCa != nil {
+		t.Fatal("Expected error due to ca data missing")
+	}
+}
+
 func TestSaveCertsToSecret(t *testing.T) {
 	client, dyn := clients()
 	k := k8s.NewFake(client, dyn)
@@ -164,6 +190,53 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 				t.Errorf("Expected second validating webhook failure policy to be set to %s", fail)
 			}
 		})
+	}
+}
+
+func TestAccessingNonExistantWebhook(t *testing.T) {
+	k := k8s.NewFake(clients())
+	ok := k.UpdateWebhook(testWebhookName, []byte{}, "Fail", k8s.MutatingHook)
+	if ok {
+		t.Error("Should not succeed when webhook does not exist")
+	}
+}
+
+var otherConfigs = []*admissionv1.MutatingWebhookConfiguration{
+	{
+		ObjectMeta: metav1.ObjectMeta{Name: testWebhookName},
+		// No webhook configurations
+	},
+	{
+		// Full configuration
+		ObjectMeta: metav1.ObjectMeta{Name: testWebhookName},
+		Webhooks: []admissionv1.MutatingWebhook{
+			{
+				Name: "",
+				ClientConfig: admissionv1.WebhookClientConfig{
+					CABundle: []byte("junk"),
+				},
+				FailurePolicy: &ignore,
+			},
+		},
+	},
+}
+
+func TestResourceStrangeConfigurationShouldSucceed(t *testing.T) {
+	ca, _, _ := genSecretData()
+	for _, config := range otherConfigs {
+		_, dyn := clients()
+		k := k8s.NewFake(nil, dyn)
+		gvk := schema.GroupVersionResource{Group: "admissionregistration.k8s.io", Version: "v1"}
+
+		err := createDynamic(dyn, config, gvkWithType(gvk, k8s.MutatingHook))
+		if err != nil {
+			t.Error(err)
+		}
+
+		ok := k.UpdateWebhook(testWebhookName, ca, "", k8s.MutatingHook)
+		if !ok {
+			t.Error("Expected ok")
+		}
 	}
 }
 

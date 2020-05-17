@@ -18,6 +18,14 @@ steps:
     testResultsFormat: 'JUnit'
     testResultsFiles: '**/TEST-*.xml'
     failTaskOnFailedTests: true
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish Coverage Results'
+  inputs:
+    codeCoverageTool: 'cobertura'
+    summaryFileLocation: '**/coverage.xml'
+    #failIfCoverageEmpty: true # Optional
+- script: git reset --hard HEAD; git clean -fdx
+  displayName: Clean
 - script: .cicd/build.sh
   displayName: 'Build'
 - script: .cicd/docker.sh

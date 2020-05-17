@@ -69,11 +69,12 @@ func (k8s *k8s) UpdateWebhook(name string, ca []byte, policyType string, hookTyp
 	resource, gvk, err := k8s.getWebhookDynamic(name, hookType)
 	if err != nil {
 		l.WithError(err).Error("Resource not found")
+		return false
 	}
 	w, ok := resource.Object["webhooks"]
 	if !ok {
-		l.Error("Unable to read 'spec.webhooks'")
-		return false
+		l.Warn("Unable to read 'spec.webhooks' - this resource has no configuration")
+		return true
 	}
 
 	wh, ok := w.([]interface{})

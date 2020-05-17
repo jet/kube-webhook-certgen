@@ -3,8 +3,20 @@ set -eox pipefail
 
 . .cicd/env.sh
 
-command="go get -u github.com/jstemmer/go-junit-report; \
-go test -mod=vendor -v ./... 2>&1 | go-junit-report > TEST-ALL.xml"
+
+
+
+
+command="go test -v ./... -coverprofile coverage.txt -covermode count 2>&1 > testresults.txt; \
+  go get github.com/jstemmer/go-junit-report; \
+  go get github.com/axw/gocov/gocov;          \
+  go get github.com/AlekSi/gocov-xml;         \
+  go get gopkg.in/matm/v1/gocov-html;         \
+  cat testresults.txt | go-junit-report > TEST-ALL.xml; \
+  gocov convert coverage.txt > coverage.json;           \
+  gocov-xml < coverage.json > coverage.xml;             \
+  mkdir coverage;                                       \
+  gocov-html < coverage.json > coverage/index.html"
 
 docker run --rm \
   -v "$(pwd):/go/src/$mod" \
@@ -12,5 +24,5 @@ docker run --rm \
   -e CGO_ENABLED=0   \
   -e GOOS=linux      \
   -e GOARCH=amd64    \
-  golang:1.12-stretch \
+  golang:1.14-stretch \
     /bin/bash -c "$command"
