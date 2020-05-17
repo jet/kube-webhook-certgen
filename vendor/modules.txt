@@ -1,3 +1,7 @@
+# github.com/AlekSi/gocov-xml v0.0.0-20190121064608-3a14fb1c4737
+## explicit
+# github.com/axw/gocov v1.0.0
+## explicit
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/evanphx/json-patch v4.2.0+incompatible
@@ -31,6 +35,8 @@ github.com/json-iterator/go
 ## explicit
 # github.com/konsorten/go-windows-terminal-sequences v1.0.3
 github.com/konsorten/go-windows-terminal-sequences
+# github.com/matm/gocov-html v0.0.0-20200509184451-71874e2e203b
+## explicit
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1

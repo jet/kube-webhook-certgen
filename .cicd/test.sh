@@ -11,7 +11,8 @@ command="go test -v ./... -coverprofile coverage.txt -covermode count 2>&1 > tes
   go get github.com/jstemmer/go-junit-report; \
   go get github.com/axw/gocov/gocov;          \
   go get github.com/AlekSi/gocov-xml;         \
-  go get gopkg.in/matm/v1/gocov-html;         \
+  go get github.com/matm/gocov-html;          \
+  go mod vendor;                              \
   cat testresults.txt | go-junit-report > TEST-ALL.xml; \
   gocov convert coverage.txt > coverage.json;           \
   gocov-xml < coverage.json > coverage.xml;             \
