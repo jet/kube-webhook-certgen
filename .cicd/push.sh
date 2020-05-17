@@ -17,7 +17,7 @@ dpush() {
 
 if exists $dockerRepo $vers; then
     echo $dockerRepo:$vers already exists, will not overwrite
-    exit 1
+    exit 0
 else
     docker login -u jettech -p $jettechPassword
     dpush amd64
