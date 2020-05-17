@@ -22,6 +22,7 @@ steps:
     codeCoverageTool: Cobertura
     summaryFileLocation: $(System.DefaultWorkingDirectory)/**/coverage.xml
     reportDirectory: $(System.DefaultWorkingDirectory)/**/coverage
+    pathToSources: $(System.DefaultWorkingDirectory)
     #failIfCoverageEmpty: true # Optional
 - script: git reset --hard HEAD; git clean -fdx
   displayName: Clean
