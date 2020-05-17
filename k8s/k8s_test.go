@@ -58,7 +58,7 @@ func TestGetCaFromCertificate(t *testing.T) {
 
 	client.CoreV1().Secrets(testNamespace).Create(context.Background(), secret, metav1.CreateOptions{})
 
-	retrievedCa, _ := k.GetCaFromSecret(testSecretName, testNamespace)
+	retrievedCa, _ := k.GetCaFromSecret(testSecretName, testNamespace, "ca")
 	if !bytes.Equal(retrievedCa, ca) {
 		t.Error("Was not able to retrieve CA information that was saved")
 	}
@@ -70,7 +70,7 @@ func TestSaveCertsToSecret(t *testing.T) {
 
 	ca, cert, key := genSecretData()
 
-	k.SaveCertsToSecret(testSecretName, testNamespace, "cert", "key", ca, cert, key)
+	k.SaveCertsToSecret(testSecretName, testNamespace, "cert", "key", "ca", ca, cert, key)
 
 	secret, _ := client.CoreV1().Secrets(testNamespace).Get(context.Background(), testSecretName, metav1.GetOptions{})
 
@@ -87,8 +87,8 @@ func TestSaveThenLoadSecret(t *testing.T) {
 	client, dyn := clients()
 	k := k8s.NewFake(client, dyn)
 	ca, cert, key := genSecretData()
-	k.SaveCertsToSecret(testSecretName, testNamespace, "cert", "key", ca, cert, key)
-	retrievedCert, _ := k.GetCaFromSecret(testSecretName, testNamespace)
+	k.SaveCertsToSecret(testSecretName, testNamespace, "cert", "key", "ca", ca, cert, key)
+	retrievedCert, _ := k.GetCaFromSecret(testSecretName, testNamespace, "ca")
 	if !bytes.Equal(retrievedCert, ca) {
 		t.Error("Was not able to retrieve CA information that was saved")
 	}
@@ -122,8 +122,8 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 				t.Error(err)
 			}
 
-			k.UpdateWebhook(testWebhookName, ca, fail, k8s.MutatingHook)
-			k.UpdateWebhook(testWebhookName, ca, fail, k8s.ValidatingHook)
+			k.UpdateWebhook(testWebhookName, ca, "Fail", k8s.MutatingHook)
+			k.UpdateWebhook(testWebhookName, ca, "Fail", k8s.ValidatingHook)
 
 			whmut := &admissionv1.MutatingWebhookConfiguration{}
 			err = getDynamic(dyn, testWebhookName, whmut,

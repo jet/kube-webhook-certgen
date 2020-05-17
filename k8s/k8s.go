@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	log "github.com/sirupsen/logrus"
-	admissionv1 "k8s.io/api/admissionregistration/v1"
 	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,9 +28,9 @@ var (
 )
 
 type K8s interface {
-	UpdateWebhook(name string, ca []byte, policyType admissionv1.FailurePolicyType, hookType WebhookType) bool
-	GetCaFromSecret(secretName string, namespace string) ([]byte, bool)
-	SaveCertsToSecret(secretName, namespace, certName, keyName string, ca, cert, key []byte) bool
+	UpdateWebhook(name string, ca []byte, policyType string, hookType WebhookType) bool
+	GetCaFromSecret(secretName, namespace, key string) ([]byte, bool)
+	SaveCertsToSecret(secretName, namespace, certName, keyName, caName string, ca, cert, key []byte) bool
 }
 
 type k8s struct {
@@ -64,8 +63,9 @@ func NewFake(client kubernetes.Interface, dyn dynamic.Interface) K8s {
 	}
 }
 
-func (k8s *k8s) UpdateWebhook(name string, ca []byte, policyType admissionv1.FailurePolicyType, hookType WebhookType) bool {
+func (k8s *k8s) UpdateWebhook(name string, ca []byte, policyType string, hookType WebhookType) bool {
 	l := log.WithField("name", name).WithField("type", hookType)
+	l.Debug("Patching hook")
 	resource, gvk, err := k8s.getWebhookDynamic(name, hookType)
 	if err != nil {
 		l.WithError(err).Error("Resource not found")
@@ -89,7 +89,7 @@ func (k8s *k8s) UpdateWebhook(name string, ca []byte, policyType admissionv1.Fai
 			return false
 		}
 		if policyType != "" {
-			hook["failurePolicy"] = string(policyType)
+			hook["failurePolicy"] = policyType
 		}
 
 		cc, ok := hook["clientConfig"]
@@ -110,6 +110,7 @@ func (k8s *k8s) UpdateWebhook(name string, ca []byte, policyType admissionv1.Fai
 		l.WithError(err).Error("Unable to update configuration")
 		return false
 	}
+	l.Debug("Patched successfully")
 	return true
 }
 
@@ -129,8 +130,8 @@ func (k8s *k8s) getWebhookDynamic(name string, typ WebhookType) (*unstructured.U
 }
 
 // GetCaFromSecret will check for the presence of a secret. If it exists, will return the content of the
-// "ca" from the secret, otherwise will return nil
-func (k8s *k8s) GetCaFromSecret(secretName string, namespace string) ([]byte, bool) {
+// key from the secret, otherwise will return nil
+func (k8s *k8s) GetCaFromSecret(secretName, namespace, key string) ([]byte, bool) {
 	log.Debugf("getting secret '%s' in namespace '%s'", secretName, namespace)
 	secret, err := k8s.client.CoreV1().Secrets(namespace).Get(context.Background(), secretName, metav1.GetOptions{})
 	if err != nil {
@@ -142,9 +143,9 @@ func (k8s *k8s) GetCaFromSecret(secretName string, namespace string) ([]byte, bo
 		return nil, false
 	}
 
-	data := secret.Data["ca"]
-	if data == nil {
-		log.Error("got secret, but it did not contain a 'cert' key")
+	data, ok := secret.Data[key]
+	if !ok {
+		log.Errorf("got secret, but it did not contain a '%s' key", key)
 		return nil, false
 	}
 	log.Debug("got secret")
@@ -152,13 +153,13 @@ func (k8s *k8s) GetCaFromSecret(secretName string, namespace string) ([]byte, bo
 }
 
 // SaveCertsToSecret saves the provided ca, cert and key into a secret in the specified namespace.
-func (k8s *k8s) SaveCertsToSecret(secretName, namespace, certName, keyName string, ca, cert, key []byte) bool {
+func (k8s *k8s) SaveCertsToSecret(secretName, namespace, certName, keyName, caName string, ca, cert, key []byte) bool {
 	log.Debugf("saving to secret '%s' in namespace '%s'", secretName, namespace)
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: secretName,
 		},
-		Data: map[string][]byte{"ca": ca, certName: cert, keyName: key},
+		Data: map[string][]byte{caName: ca, certName: cert, keyName: key},
 	}
 
 	log.Debug("saving secret")
