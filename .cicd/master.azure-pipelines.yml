@@ -16,14 +16,14 @@ steps:
   displayName: 'Publish Test Results'
   inputs:
     testResultsFormat: 'JUnit'
-    testResultsFiles: '**/TEST-*.xml'
+    testResultsFiles: '**/.cover/TEST-*.xml'
     failTaskOnFailedTests: true
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish Coverage Results'
   inputs:
     codeCoverageTool: Cobertura
-    summaryFileLocation: $(System.DefaultWorkingDirectory)/**/coverage.xml
-    reportDirectory: $(System.DefaultWorkingDirectory)/**/coverage
+    summaryFileLocation: $(System.DefaultWorkingDirectory)/**/.cover/coverage.xml
+    reportDirectory: $(System.DefaultWorkingDirectory)/**/.cover
     pathToSources: $(System.DefaultWorkingDirectory)
     #failIfCoverageEmpty: true # Optional
 - script: git reset --hard HEAD; git clean -fdx

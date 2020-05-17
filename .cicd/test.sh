@@ -3,17 +3,18 @@ set -eox pipefail
 
 . .cicd/env.sh
 
-command="go test -v ./... -coverprofile coverage.txt -covermode count 2>&1 > testresults.txt; \
+command="mkdir .cover || true; \
+  go test -v ./... -coverprofile .cover/coverage.txt -covermode count 2>&1 > .cover/testresults.txt; \
   go get github.com/jstemmer/go-junit-report; \
   go get github.com/axw/gocov/gocov;          \
   go get github.com/AlekSi/gocov-xml;         \
-  go get github.com/matm/gocov-html;          \
   go mod vendor;                              \
-  cat testresults.txt | go-junit-report > TEST-ALL.xml; \
-  gocov convert coverage.txt > coverage.json;           \
-  gocov-xml < coverage.json > coverage.xml;             \
-  mkdir coverage || true                                \
-  gocov-html < coverage.json > coverage/index.html"
+  cat .cover/testresults.txt | go-junit-report > .cover/TEST-ALL.xml; \
+  gocov convert .cover/coverage.txt > .cover/coverage.json;           \
+  gocov-xml < .cover/coverage.json > .cover/coverage.xml;"
+
+# go get github.com/matm/gocov-html;          \
+# gocov-html < .cover/coverage.json > .cover/index.html
 
 docker run --rm \
   -v "$(pwd):/go/src/$mod" \
