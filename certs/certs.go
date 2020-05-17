@@ -1,19 +1,20 @@
 package certs
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
+	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"math/big"
 	"net"
 	"time"
 )
 
-// GenerateCerts venerates a ca with a leaf certificate and key and returns the ca, cert and key as PEM encoded slices
+// GenerateCerts creates ed25519 ca with a leaf certificate. The returned values are the ca cert and leaf cert, leaf
+// private key. The ca key is discarded.
 func GenerateCerts(hosts []string) (ca []byte, cert []byte, key []byte, err error) {
 	notBefore := time.Now().Add(time.Minute * -5)
 	notAfter := notBefore.Add(100 * 365 * 24 * time.Hour)
@@ -23,9 +24,9 @@ func GenerateCerts(hosts []string) (ca []byte, cert []byte, key []byte, err erro
 	if err != nil {
 		return nil, nil, nil, errors.Wrap(err, "failed to generate serial number")
 	}
-	rootKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	rootPub, rootPriv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		log.WithField("err", err).Fatal("failed scdsa.GenerateKey")
+		return nil, nil, nil, errors.Wrap(err, "failed ed25519.GenerateKey")
 	}
 
 	rootTemplate := x509.Certificate{
@@ -38,19 +39,22 @@ func GenerateCerts(hosts []string) (ca []byte, cert []byte, key []byte, err erro
 		IsCA:                  true,
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, &rootKey.PublicKey, rootKey)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, rootPub, rootPriv)
 	if err != nil {
 		return nil, nil, nil, errors.Wrap(err, "failed createCertificate for Ca")
 	}
 
-	ca = encodeCert(derBytes)
-
-	leafKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	ca, err = encodeCert(derBytes)
 	if err != nil {
-		return nil, nil, nil, errors.Wrap(err, "failed createLeafKey for certificate")
+		return nil, nil, nil, err
 	}
 
-	key, err = encodeKey(leafKey)
+	leafPub, leafPriv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, nil, nil, errors.Wrap(err, "failed ed25519.GenerateKey")
+	}
+
+	key, err = encodeKey(leafPriv)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -76,23 +80,51 @@ func GenerateCerts(hosts []string) (ca []byte, cert []byte, key []byte, err erro
 		}
 	}
 
-	derBytes, err = x509.CreateCertificate(rand.Reader, &leafTemplate, &rootTemplate, &leafKey.PublicKey, rootKey)
+	derBytes, err = x509.CreateCertificate(rand.Reader, &leafTemplate, &rootTemplate, leafPub, rootPriv)
 	if err != nil {
 		return nil, nil, nil, errors.Wrap(err, "failed createLeaf certificate")
 	}
 
-	cert = encodeCert(derBytes)
-	return ca, cert, key, nil
+	cert, err = encodeCert(derBytes)
+	return ca, cert, key, err
 }
 
-func encodeKey(key *ecdsa.PrivateKey) ([]byte, error) {
-	b, err := x509.MarshalECPrivateKey(key)
+func encodeKey(key ed25519.PrivateKey) ([]byte, error) {
+	// Marshal the innter CurvePrivateKey.
+	derBytes, err := encodeEd25519(key)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to marshal ECDSA private key")
+		return nil, err
 	}
-	return pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: b}), nil
+	encoded := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: derBytes})
+	if encoded == nil {
+		return nil, errors.New("unable to encode key to pem")
+	}
+	return encoded, nil
 }
 
-func encodeCert(derBytes []byte) []byte {
-	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+func encodeCert(derBytes []byte) ([]byte, error) {
+	encoded := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	if encoded == nil {
+		return nil, errors.New("unable to encode cert to pem")
+	}
+	return encoded, nil
+}
+
+// https://github.com/cloudflare/cfssl/blob/master/helpers/derhelpers/ed25519.go
+func encodeEd25519(key ed25519.PrivateKey) ([]byte, error) {
+	curvePrivateKey, err := asn1.Marshal(key.Seed())
+	if err != nil {
+		return nil, err
+	}
+
+	return asn1.Marshal(
+		struct {
+			Version    int
+			Algorithm  pkix.AlgorithmIdentifier
+			PrivateKey []byte
+		}{
+			0,
+			pkix.AlgorithmIdentifier{Algorithm: asn1.ObjectIdentifier{1, 3, 101, 112}},
+			curvePrivateKey,
+		})
 }

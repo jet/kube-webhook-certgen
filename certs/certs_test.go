@@ -16,7 +16,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestCertificateCreation(t *testing.T) {
-	ca, cert, key, err := GenerateCerts([]string{"localhost"})
+	ca, cert, key, err := GenerateCerts([]string{"localhost", "127.0.0.1"})
 	if err != nil {
 		t.Fatal(err)
 	}

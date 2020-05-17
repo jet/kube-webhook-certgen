@@ -11,7 +11,6 @@ require (
 	github.com/pkg/errors v0.8.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/cobra v1.0.0
-	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/tidwall/gjson v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 	golang.org/x/net v0.0.0-20200513185701-a91f0712d120 // indirect
