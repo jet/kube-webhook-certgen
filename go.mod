@@ -3,6 +3,7 @@ module github.com/jet/kube-webhook-certgen
 go 1.14
 
 require (
+	github.com/golang/mock v1.2.0
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/onrik/logrus v0.5.1
 	github.com/pkg/errors v0.9.1

@@ -11,7 +11,10 @@ var (
 		Use:   "pre",
 		Short: "Generate a ca, cert, and key. Store the results in a secret 'secret-name' in 'secret-namespace'",
 		Long:  "Generate a ca, cert, and key. Store the results in a secret 'secret-name' in 'secret-namespace'",
-		Run:   pre,
+		Run: func(_ *cobra.Command, _ []string) {
+			k := k8s.New(cfg.kubeconfig)
+			os.Exit(pre(k))
+		},
 	}
 )
 
@@ -28,14 +31,14 @@ func init() {
 	preCmd.MarkFlagRequired("secret-namespace")
 }
 
-func pre(_ *cobra.Command, _ []string) {
-	k := k8s.New(cfg.kubeconfig)
+func pre(k k8s.K8s) int {
 	ca, ok := ensureSecret(k)
 	if !ok {
-		os.Exit(1)
+		return 1
 	}
 
 	// Try to patch hooks. These may not exist the first time and so errors are fine.
 	// User may also be adding more hooks as part of an upgrade, resulting in partial success.
 	patchHooks(k, ca)
+	return 0
 }

@@ -19,7 +19,9 @@ var (
 				os.Exit(1)
 			}
 		},
-		Run: post,
+		Run: func(_ *cobra.Command, _ []string) {
+			os.Exit(post(k8s.New(cfg.kubeconfig)))
+		},
 	}
 )
 
@@ -31,15 +33,17 @@ func init() {
 	postCmd.MarkFlagRequired("secret-namespace")
 }
 
-func post(_ *cobra.Command, _ []string) {
-	k := k8s.New(cfg.kubeconfig)
+func post(k k8s.K8s) int {
 	ca, ok := k.GetCaFromSecret(cfg.secretName, cfg.namespace, cfg.caName)
 	if !ok {
-		log.Fatalf("no secret '%s' in '%s'", cfg.secretName, cfg.namespace)
+		log.Errorf("no secret '%s' in '%s'", cfg.secretName, cfg.namespace)
+		return 1
 	}
 
 	// All configured hooks must be successfully patched in the post step.
 	if !patchHooks(k, ca) {
-		os.Exit(1)
+		return 1
 	}
+
+	return 0
 }
