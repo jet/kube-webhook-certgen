@@ -25,9 +25,7 @@ steps:
     summaryFileLocation: $(System.DefaultWorkingDirectory)/**/.cover/coverage.xml
     reportDirectory: $(System.DefaultWorkingDirectory)/**/.cover
     pathToSources: $(System.DefaultWorkingDirectory)
-    #failIfCoverageEmpty: true # Optional
-- script: git reset --hard HEAD; git clean -fdx
-  displayName: Clean
+    failIfCoverageEmpty: true
 - script: .cicd/build.sh
   displayName: 'Build'
 - script: .cicd/docker.sh
