@@ -106,7 +106,7 @@ func (k8s *k8s) GetCaFromSecret(secretName string, namespace string) []byte {
 
 	data := secret.Data["ca"]
 	if data == nil {
-		log.Fatal("got secret, but it did not contain a 'cert' key")
+		log.Fatal("got secret, but it did not contain a 'ca' key")
 	}
 	log.Debug("got secret")
 	return data
