@@ -27,6 +27,7 @@ TODO
 ## Known Users
 - [stable/prometheus-operator](https://github.com/helm/charts/tree/master/stable/prometheus-operator) helm chart
 - [stable/nginx-ingress](https://hub.helm.sh/charts/stable/nginx-ingress)
+- [kind.sigs.k8s.io nginx config](https://kind.sigs.k8s.io/docs/user/ingress/)
 - Internally at [Walmart](https://github.com/walmartlabs) and [Jet.com](https://github.com/jet)
 
 ## TODO:
