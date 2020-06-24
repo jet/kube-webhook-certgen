@@ -18,3 +18,4 @@ build() {
 build amd64
 build arm
 build arm64
+build s390x
