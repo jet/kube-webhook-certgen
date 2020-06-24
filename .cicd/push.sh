@@ -23,12 +23,15 @@ else
     dpush amd64
     dpush arm
     dpush arm64
+    dpush s390x
     docker manifest create $dockerRepo:$vers \
       $dockerRepo:amd64-$vers \
       $dockerRepo:arm-$vers   \
-      $dockerRepo:arm64-$vers
+      $dockerRepo:arm64-$vers \
+      $dockerRepo:s390x-$vers
     dmtag amd64
     dmtag arm
     dmtag arm64
+    dmtag s390x
     docker manifest push $dockerRepo:$vers
 fi
