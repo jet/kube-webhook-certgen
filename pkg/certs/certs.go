@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
 	log "github.com/sirupsen/logrus"
 	"math/big"
@@ -36,6 +37,7 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  true,
+		Subject:               pkix.Name{Organization: []string{"nil"}},
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, &rootKey.PublicKey, rootKey)
@@ -64,6 +66,7 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  false,
+		Subject:               pkix.Name{Organization: []string{"nil"}},
 	}
 	hosts := strings.Split(host, ",")
 	for _, h := range hosts {
