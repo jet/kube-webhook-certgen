@@ -11,10 +11,19 @@ steps:
 - script: .cicd/test.sh
   displayName: 'Test'
 - task: PublishTestResults@2
+  displayName: 'Publish Test Results'
   inputs:
     testResultsFormat: 'JUnit'
-    testResultsFiles: '**/TEST-*.xml'
+    testResultsFiles: '**/.cover/TEST-*.xml'
     failTaskOnFailedTests: true
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish Coverage Results'
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: $(System.DefaultWorkingDirectory)/**/.cover/coverage.xml
+    reportDirectory: $(System.DefaultWorkingDirectory)/**/.cover
+    pathToSources: $(System.DefaultWorkingDirectory)
+    failIfCoverageEmpty: true
 - script: .cicd/build.sh
   displayName: 'Build'
 - script: .cicd/docker.sh

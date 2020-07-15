@@ -3,7 +3,7 @@ set -eox pipefail
 
 . .cicd/env.sh
 
-command="go fmt ./... && git diff --exit-code;"
+command="go fmt ./... && git diff --exit-code; go vet ./..."
 
 docker run --rm \
   -v "$(pwd):/go/src/$mod" \
@@ -11,5 +11,5 @@ docker run --rm \
   -e CGO_ENABLED=0   \
   -e GOOS=linux      \
   -e GOARCH=amd64    \
-  golang:1.12-stretch \
+  golang:1.14-stretch \
     /bin/bash -c "$command"
