@@ -38,7 +38,7 @@ func prePatchCommand(cmd *cobra.Command, args []string) {
 }
 
 func patchCommand(_ *cobra.Command, _ []string) {
-	k := k8s.New("")
+	k := k8s.New(cfg.kubeconfig)
 	ca := k.GetCaFromSecret(cfg.secretName, cfg.namespace)
 
 	if ca == nil {
