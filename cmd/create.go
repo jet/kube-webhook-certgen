@@ -17,7 +17,7 @@ var (
 )
 
 func createCommand(cmd *cobra.Command, args []string) {
-	k := k8s.New("")
+	k := k8s.New(cfg.kubeconfig)
 	ca := k.GetCaFromSecret(cfg.secretName, cfg.namespace)
 	if ca == nil {
 		log.Info("creating new secret")
