@@ -37,7 +37,7 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  true,
-		Subject:               pkix.Name{Organization: []string{"nil"}},
+		Subject:               pkix.Name{Organization: []string{"nil1"}},
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &rootTemplate, &rootTemplate, &rootKey.PublicKey, rootKey)
@@ -66,7 +66,7 @@ func GenerateCerts(host string) (ca []byte, cert []byte, key []byte) {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 		IsCA:                  false,
-		Subject:               pkix.Name{Organization: []string{"nil"}},
+		Subject:               pkix.Name{Organization: []string{"nil2"}},
 	}
 	hosts := strings.Split(host, ",")
 	for _, h := range hosts {
