@@ -45,7 +45,7 @@ func patchCommand(_ *cobra.Command, _ []string) {
 		log.Fatalf("no secret with '%s' in '%s'", cfg.secretName, cfg.namespace)
 	}
 
-	k.PatchWebhookConfigurations(cfg.webhookName, ca, &failurePolicy, cfg.patchMutating, cfg.patchValidating)
+	k.PatchWebhookConfigurations(cfg.webhookName, ca, &failurePolicy, cfg.patchMutating, cfg.patchValidating, cfg.crds)
 }
 
 func init() {
@@ -56,6 +56,7 @@ func init() {
 	patch.Flags().BoolVar(&cfg.patchValidating, "patch-validating", true, "If true, patch validatingwebhookconfiguration")
 	patch.Flags().BoolVar(&cfg.patchMutating, "patch-mutating", true, "If true, patch mutatingwebhookconfiguration")
 	patch.Flags().StringVar(&cfg.patchFailurePolicy, "patch-failure-policy", "", "If set, patch the webhooks with this failure policy. Valid options are Ignore or Fail")
+	patch.Flags().StringSliceVar(&cfg.crds, "crds", []string{}, "if set, will patch crd conversion.webhook.clientConfig.caBundle with the generated ca in secret")
 	patch.MarkFlagRequired("secret-name")
 	patch.MarkFlagRequired("namespace")
 	patch.MarkFlagRequired("webhook-name")

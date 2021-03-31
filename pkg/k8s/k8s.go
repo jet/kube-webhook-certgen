@@ -2,17 +2,32 @@ package k8s
 
 import (
 	"context"
+
 	log "github.com/sirupsen/logrus"
 	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	ctr "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var (
+	// Scheme defines the default KubeVela schema
+	Scheme = k8sruntime.NewScheme()
+)
+
+func init() {
+	_ = crdv1.AddToScheme(Scheme)
+}
 
 type k8s struct {
 	clientset kubernetes.Interface
+	client    client.Client
 }
 
 func New(kubeconfig string) *k8s {
@@ -26,7 +41,11 @@ func New(kubeconfig string) *k8s {
 		log.WithError(err).Fatal("error creating kubernetes client")
 	}
 
-	return &k8s{clientset: c}
+	cc, err := client.New(ctr.GetConfigOrDie(), client.Options{Scheme: Scheme})
+	if err != nil {
+		log.WithError(err).Fatal("error creating controller runtime client")
+	}
+	return &k8s{clientset: c, client: cc}
 }
 
 // PatchWebhookConfigurations will patch validatingWebhook and mutatingWebhook clientConfig configurations with
@@ -34,7 +53,7 @@ func New(kubeconfig string) *k8s {
 func (k8s *k8s) PatchWebhookConfigurations(
 	configurationNames string, ca []byte,
 	failurePolicy *admissionv1beta1.FailurePolicyType,
-	patchMutating bool, patchValidating bool) {
+	patchMutating bool, patchValidating bool, crds []string) {
 
 	log.Infof("patching webhook configurations '%s' mutating=%t, validating=%t, failurePolicy=%s", configurationNames, patchMutating, patchValidating, *failurePolicy)
 
@@ -91,6 +110,20 @@ func (k8s *k8s) PatchWebhookConfigurations(
 		log.Debug("patched mutating hook")
 	} else {
 		log.Debug("mutating hook patching not required")
+	}
+
+	for _, crd := range crds {
+		var crdObject crdv1.CustomResourceDefinition
+		if err := k8s.client.Get(context.TODO(), client.ObjectKey{Name: crd}, &crdObject); err != nil {
+			log.WithField("err", err).Fatal("failed getting CRD")
+			continue
+		}
+		crdObject.Spec.Conversion.Webhook.ClientConfig.CABundle = ca
+		if err := k8s.client.Update(context.TODO(), &crdObject); err != nil {
+			log.WithField("err", err).Fatal("failed patch CRD")
+			continue
+		}
+		log.Info("patch crd", crd, " hook")
 	}
 
 	log.Info("Patched hook(s)")
