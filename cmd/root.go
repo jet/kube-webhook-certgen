@@ -1,11 +1,12 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/onrik/logrus/filename"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
-	"os"
 )
 
 var (
@@ -31,6 +32,7 @@ var (
 		patchMutating      bool
 		patchFailurePolicy string
 		kubeconfig         string
+		crds               []string
 	}{}
 
 	failurePolicy admissionv1beta1.FailurePolicyType
