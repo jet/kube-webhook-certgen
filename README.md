@@ -84,3 +84,4 @@ Global Flags:
 
 ## Known Users
 - [stable/prometheus-operator](https://github.com/helm/charts/tree/master/stable/prometheus-operator) helm chart
+- [ingress-nginx](https://github.com/kubernetes/ingress-nginx/tree/master/charts/ingress-nginx) helm chart
