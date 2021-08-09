@@ -2,9 +2,10 @@ package k8s
 
 import (
 	"context"
+
 	log "github.com/sirupsen/logrus"
-	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
-	"k8s.io/api/core/v1"
+	admissionv1 "k8s.io/api/admissionregistration/v1"
+	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -33,14 +34,14 @@ func New(kubeconfig string) *k8s {
 // the provided ca data. If failurePolicy is provided, patch all webhooks with this value
 func (k8s *k8s) PatchWebhookConfigurations(
 	configurationNames string, ca []byte,
-	failurePolicy *admissionv1beta1.FailurePolicyType,
+	failurePolicy *admissionv1.FailurePolicyType,
 	patchMutating bool, patchValidating bool) {
 
 	log.Infof("patching webhook configurations '%s' mutating=%t, validating=%t, failurePolicy=%s", configurationNames, patchMutating, patchValidating, *failurePolicy)
 
 	if patchValidating {
 		valHook, err := k8s.clientset.
-			AdmissionregistrationV1beta1().
+			AdmissionregistrationV1().
 			ValidatingWebhookConfigurations().
 			Get(context.TODO(), configurationNames, metav1.GetOptions{})
 
@@ -56,7 +57,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 			}
 		}
 
-		if _, err = k8s.clientset.AdmissionregistrationV1beta1().
+		if _, err = k8s.clientset.AdmissionregistrationV1().
 			ValidatingWebhookConfigurations().
 			Update(context.TODO(), valHook, metav1.UpdateOptions{}); err != nil {
 			log.WithField("err", err).Fatal("failed patching validating webhook")
@@ -68,7 +69,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 
 	if patchMutating {
 		mutHook, err := k8s.clientset.
-			AdmissionregistrationV1beta1().
+			AdmissionregistrationV1().
 			MutatingWebhookConfigurations().
 			Get(context.TODO(), configurationNames, metav1.GetOptions{})
 		if err != nil {
@@ -83,7 +84,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 			}
 		}
 
-		if _, err = k8s.clientset.AdmissionregistrationV1beta1().
+		if _, err = k8s.clientset.AdmissionregistrationV1().
 			MutatingWebhookConfigurations().
 			Update(context.TODO(), mutHook, metav1.UpdateOptions{}); err != nil {
 			log.WithField("err", err).Fatal("failed patching validating webhook")
