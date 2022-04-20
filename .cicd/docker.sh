@@ -16,5 +16,6 @@ dbuild amd64
 dbuild arm
 dbuild arm64
 dbuild s390x
+dbuild ppc64le
 
 docker run $dockerRepo:amd64-$vers version

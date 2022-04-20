@@ -19,3 +19,4 @@ build amd64
 build arm
 build arm64
 build s390x
+build ppc64le
