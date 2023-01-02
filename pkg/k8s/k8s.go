@@ -2,9 +2,10 @@ package k8s
 
 import (
 	"context"
+
 	log "github.com/sirupsen/logrus"
 	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -72,7 +73,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 			MutatingWebhookConfigurations().
 			Get(context.TODO(), configurationNames, metav1.GetOptions{})
 		if err != nil {
-			log.WithField("err", err).Fatal("failed getting validating webhook")
+			log.WithField("err", err).Fatal("failed getting mutating webhook")
 		}
 
 		for i := range mutHook.Webhooks {
@@ -86,7 +87,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 		if _, err = k8s.clientset.AdmissionregistrationV1beta1().
 			MutatingWebhookConfigurations().
 			Update(context.TODO(), mutHook, metav1.UpdateOptions{}); err != nil {
-			log.WithField("err", err).Fatal("failed patching validating webhook")
+			log.WithField("err", err).Fatal("failed patching mutating webhook")
 		}
 		log.Debug("patched mutating hook")
 	} else {
