@@ -87,7 +87,7 @@ func (k8s *k8s) PatchWebhookConfigurations(
 		if _, err = k8s.clientset.AdmissionregistrationV1beta1().
 			MutatingWebhookConfigurations().
 			Update(context.TODO(), mutHook, metav1.UpdateOptions{}); err != nil {
-			log.WithField("err", err).Fatal("failed patching validating webhook")
+			log.WithField("err", err).Fatal("failed patching mutating webhook")
 		}
 		log.Debug("patched mutating hook")
 	} else {
