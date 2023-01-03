@@ -3,13 +3,13 @@ package k8s
 import (
 	"bytes"
 	"context"
-	"k8s.io/api/admissionregistration/v1beta1"
-	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
-	"k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
 	"math/rand"
 	"testing"
+
+	admissionv1 "k8s.io/api/admissionregistration/v1"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 const (
@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	fail   = admissionv1beta1.Fail
-	ignore = admissionv1beta1.Ignore
+	fail   = admissionv1.Fail
+	ignore = admissionv1.Ignore
 )
 
 func genSecretData() (ca, cert, key []byte) {
@@ -92,29 +92,29 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 	ca, _, _ := genSecretData()
 
 	k.clientset.
-		AdmissionregistrationV1beta1().
+		AdmissionregistrationV1().
 		MutatingWebhookConfigurations().
-		Create(context.Background(), &v1beta1.MutatingWebhookConfiguration{
+		Create(context.Background(), &v1.MutatingWebhookConfiguration{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: testWebhookName,
 			},
-			Webhooks: []v1beta1.MutatingWebhook{{Name: "m1"}, {Name: "m2"}}}, metav1.CreateOptions{})
+			Webhooks: []v1.MutatingWebhook{{Name: "m1"}, {Name: "m2"}}}, metav1.CreateOptions{})
 
 	k.clientset.
-		AdmissionregistrationV1beta1().
+		AdmissionregistrationV1().
 		ValidatingWebhookConfigurations().
-		Create(context.Background(), &v1beta1.ValidatingWebhookConfiguration{
+		Create(context.Background(), &v1.ValidatingWebhookConfiguration{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: testWebhookName,
 			},
-			Webhooks: []v1beta1.ValidatingWebhook{{Name: "v1"}, {Name: "v2"}}}, metav1.CreateOptions{})
+			Webhooks: []v1.ValidatingWebhook{{Name: "v1"}, {Name: "v2"}}}, metav1.CreateOptions{})
 
 	k.PatchWebhookConfigurations(testWebhookName, ca, &fail, true, true)
 
 	whmut, err := k.clientset.
-		AdmissionregistrationV1beta1().
+		AdmissionregistrationV1().
 		MutatingWebhookConfigurations().
 		Get(context.Background(), testWebhookName, metav1.GetOptions{})
 
@@ -123,7 +123,7 @@ func TestPatchWebhookConfigurations(t *testing.T) {
 	}
 
 	whval, err := k.clientset.
-		AdmissionregistrationV1beta1().
+		AdmissionregistrationV1().
 		MutatingWebhookConfigurations().
 		Get(context.Background(), testWebhookName, metav1.GetOptions{})
 
